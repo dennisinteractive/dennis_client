@@ -1,0 +1,15 @@
+name = Dennis Client
+description = Sponsored content
+core = 7.x
+package = Dennis Distro (Optional)
+php = 5.2.4
+version = 7.x-1.0
+project = dennis_client
+dependencies[] = features
+dependencies[] = list
+dependencies[] = taxonomy
+dependencies[] = dennis_core
+dependencies[] = dennis_media
+dependencies[] = dennis_teaser_image
+features[features_api][] = api:1
+features[taxonomy][] = clients

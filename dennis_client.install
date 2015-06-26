@@ -1,0 +1,41 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function dennis_client_install() {
+  // Add the fields to Article, Reviews.
+  $fields = array('field_client', 'field_sponsored');
+  $bundles = array('article', 'review');
+  foreach ($fields as $field) {
+    dennis_client_ensure_field($field, $bundles);
+  }
+}
+
+/**
+ * Ensure sponsored field exists for article and review node types.
+ */
+function dennis_client_update_7100() {
+  dennis_client_ensure_field('field_sponsored');
+}
+
+/**
+ * Use Category hub view to display client taxonomy.
+ */
+function dennis_client_update_7101() {
+  taxonomy_display_save_taxonomy_display('clients', array(
+    'term_display_plugin' => 'TaxonomyDisplayTermDisplayHandlerCore',
+    'term_display_options' => NULL,
+    'associated_display_plugin' => 'TaxonomyDisplayAssociatedDisplayHandlerViews',
+    'associated_display_options' => array(
+      'view' => 'category_hub',
+      'display' => 'default',
+    ),
+    'breadcrumb_display_plugin' => 'TaxonomyDisplayBreadcrumbDisplayHandlerCore',
+    'add_feed' => 1,
+  ));
+}

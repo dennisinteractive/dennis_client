@@ -1,0 +1,369 @@
+<?php
+/**
+ * @file
+ * Code for the Dennis Client module.
+ */
+
+/**
+ * Implements hook_dfp_global_targeting_alter().
+ *
+ * Adjust the ad tags if the current node, index page is tagged with a
+ * "client" taxonomy term.
+ * @see https://didev.fogbugz.com/default.asp?20972
+ * @see https://didev.fogbugz.com/default.asp?23527
+ */
+function dennis_client_dfp_global_targeting_alter(&$targeting) {
+
+  // Start point for the $client_page variable.
+  $client_page = FALSE;
+  $whitelist = array(
+    'article',
+    'ord',
+    'test',
+    'live',
+  );
+
+  // Get the current page object.
+  $item = menu_get_object();
+
+  // Check for a node with content in field_client.
+  if ($item && $item->nid && !empty($item->field_client)) {
+    if (!empty($item->field_client[LANGUAGE_NONE][0]['taxonomy_term'])) {
+      // Use the already loaded term.
+      $term = $item->field_client[LANGUAGE_NONE][0]['taxonomy_term'];
+    }
+    else {
+      // Load the term.
+      $term = taxonomy_term_load($item->field_client[LANGUAGE_NONE][0]['tid']);
+    }
+
+    // Sanity check, can't do proper object instance checking in Drupal 7.
+    if (!$term) {
+      return;
+    }
+
+    // Ensure we a referring to our 'client' taxonomy.
+    if ($term->vocabulary_machine_name != 'clients') {
+      return;
+    }
+
+    $client_page = TRUE;
+  }
+  else {
+    // Get the current page object.
+    $menu_item = menu_get_item();
+
+    // Add the client key value pair on index pages.
+    if (strpos($menu_item['path'], 'taxonomy/term/') !== FALSE && !empty($menu_item['page_arguments'][0])) {
+      $term = taxonomy_term_load($menu_item['page_arguments'][0]);
+      if ($term->vocabulary_machine_name == 'clients') {
+        $client_page = TRUE;
+      }
+    }
+  }
+
+  // Check for whitelisted keys and add the client kvp.
+  if ($client_page) {
+
+    foreach ($targeting as $index => $entry) {
+      if (!in_array($entry['target'], $whitelist)) {
+        unset($targeting[$index]);
+      }
+    }
+
+    $targeting[] = array(
+      'target' => 'client',
+      'value' => taxonomy_term_title($term),
+    );
+  }
+}
+
+/**
+ * Ensures the required field is part of the appropriate content types.
+ *
+ * NB: not using features to avoid dependency problems with other optional
+ * modules.
+ *
+ * @param string $field_name
+ *   Name of the field you want to ensure exists and has an instance.
+ * @param array $content_types
+ *   An array of content type names to act on.
+ */
+function dennis_client_ensure_field($field_name, $content_types = array('article', 'review')) {
+  module_load_include('inc', 'dennis_client', 'dennis_client.field');
+
+  // Ensure the field is created only if it doesn't exist.
+  $field_info = field_info_field($field_name);
+  if (is_null($field_info)) {
+    if ($field = dennis_client_get_field_definition($field_name)) {
+      field_create_field($field);
+    }
+  }
+
+  // See if the field is part of the required bundles.
+  $info = field_info_field_map();
+  if (isset($info[$field_name])) {
+    foreach ($info[$field_name] as $bundles) {
+      // Only interested in nodes.
+      if (!isset($bundles['node'])) {
+        // Not a node so check the next bundle.
+        continue;
+      }
+
+      // Remove from $content_types any that already has the field.
+      foreach ($bundles['node'] as $node) {
+        $index = array_search($node, $content_types);
+        if ($index !== FALSE) {
+          unset($content_types[$index]);
+        }
+      }
+
+    }
+  }
+
+  // The field is needed if there are any entries left in $content_types.
+  foreach ($content_types as $bundle) {
+    if ($instance = dennis_client_get_field_instance_definition($field_name, $bundle)) {
+      // Check if there is an existing instance of this field on this bundle.
+      $prior_instance = field_read_instance($instance['entity_type'], $instance['field_name'], $instance['bundle']);
+      if ($prior_instance === FALSE) {
+        field_create_instance($instance);
+      }
+    }
+  }
+
+}
+
+/**
+ * Get field definition from a field name.
+ *
+ * Ensures the fuction that defines the field exists. If it does call it and
+ * return result.
+ *
+ * @param string $field_name
+ *   Name of the field to check is defined.
+ *
+ * @return array
+ *   Field config definition.
+ */
+function dennis_client_get_field_definition($field_name) {
+  module_load_include('inc', 'dennis_client', 'dennis_client.field');
+  $field_config_function = 'dennis_client_' . $field_name . '_config';
+  if (function_exists($field_config_function)) {
+    return call_user_func($field_config_function);
+  }
+  else {
+    watchdog('dennis_client', 'Field definition for %field does not exist.', array('%field' => $field_name));
+  }
+}
+
+/**
+ * Ensures the fuction that defines the field instance exists.
+ *
+ * @param string $field_name
+ *   Name of the field to check is defined.
+ *
+ * @return array
+ *   Field instance config definition.
+ */
+function dennis_client_get_field_instance_definition($field_name, $bundle) {
+  module_load_include('inc', 'dennis_client', 'dennis_client.field');
+  $field_config_function = 'dennis_client_' . $field_name . '_instance';
+  if (function_exists($field_config_function)) {
+    return call_user_func($field_config_function, $bundle);
+  }
+  else {
+    watchdog('dennis_client', 'Field instance definition for %field does not exist.', array('%field' => $field_name));
+  }
+}
+
+
+/**
+ * Helper function to revert to the field config in dennis_client.field.inc.
+ *
+ * Only updates if the field exists.
+ * Use dennis_client_ensure_field() to create it.
+ *
+ * @param string $field_name
+ *   Name of the field to revert.
+ *
+ * @see dennis_client_ensure_field()
+ */
+function _dennis_client_revert_field($field_name) {
+  module_load_include('inc', 'dennis_client', 'dennis_client.field');
+  if ($field = dennis_client_get_field_definition($field_name)) {
+    field_update_field($field);
+  }
+}
+
+/**
+ * Helper function to revert to the field config in dennis_client.field.inc.
+ *
+ * Only updates if the field instance exists.
+ * Use dennis_client_ensure_field() to create it.
+ *
+ * @param string $field_name
+ *   Name of the field instance to revert.
+ * @param string $bundle
+ *   Name of the bundle the field instance is a part of.
+ */
+function _dennis_client_revert_field_instance($field_name, $bundle) {
+  module_load_include('inc', 'dennis_client', 'dennis_client.field');
+  if ($field_config_instance_function = dennis_client_ensure_field_instance_definition($field_name)) {
+    $instance = call_user_func($field_config_instance_function, $bundle);
+    field_update_instance($instance);
+  }
+}
+
+/**
+ * Implements hook_views_default_views_alter().
+ */
+function dennis_client_views_default_views_alter(&$views) {
+  if (isset($views['content_administration'])) {
+    $client_filter = &$views['content_administration']->display['default']->display_options['filters']['field_client_tid'];
+    /* Filter criterion: Content: Client (field_client) */
+    $client_filter['id'] = 'field_client_tid';
+    $client_filter['table'] = 'field_data_field_client';
+    $client_filter['field'] = 'field_client_tid';
+    $client_filter['value'] = '';
+    $client_filter['exposed'] = TRUE;
+    $client_filter['expose']['operator_id'] = 'field_client_tid_op';
+    $client_filter['expose']['label'] = 'Client';
+    $client_filter['expose']['operator'] = 'field_client_tid_op';
+    $client_filter['expose']['identifier'] = 'field_client_tid';
+    $client_filter['expose']['remember_roles'] = array(
+      2 => '2',
+      1 => 0,
+      3 => 0,
+      5 => 0,
+      6 => 0,
+      4 => 0,
+    );
+    $client_filter['type'] = 'select';
+    $client_filter['vocabulary'] = 'clients';
+  }
+
+  // If the sponsored tid is set, exclude from xml news sitemap.
+  if (isset($views['xmlsitemap_news'])) {
+    if ($sponsored_tid = variable_get('dennis_client_sponsored_tid', FALSE)) {
+      $views['xmlsitemap_news']->display['default']->display_options['filters']['field_article_type_tid_1'] = array(
+        'id' => 'field_article_type_tid_1',
+        'table' => 'field_data_field_article_type',
+        'field' => 'field_article_type_tid',
+        'operator' => 'not',
+        'value' => array(
+          $sponsored_tid => $sponsored_tid,
+        ),
+        'type' => 'select',
+        'vocabulary' => 'article_type',
+        'hierarchy' => 1,
+      );
+    }
+  }
+}
+
+/**
+ * Implements hook_node_view().
+ */
+function dennis_client_node_view($node, $view_mode, $langcode) {
+  if ($view_mode == 'full') {
+    // Adding meta tag for googlebot-news.
+    if (dennis_client_node_is_sponsored($node)) {
+      $element = array(
+        '#tag' => 'meta',
+        '#attributes' => array(
+          'name' => 'googlebot-news',
+          'content' => 'noindex',
+        ),
+      );
+      drupal_add_html_head($element, 'googlebot-news');
+    }
+  }
+}
+
+/**
+ * Implements hook_views_query_alter().
+ *
+ * Adds the restriction on sponsored checkbox to the query.
+ */
+function dennis_client_views_query_alter(&$view, &$query) {
+  switch ($view->name) {
+    case 'xmlsitemap_news':
+      // Joining sponsored field to the xmlsitemap_view.
+      $join = new views_join();
+      $join->table = 'field_data_field_sponsored';
+      $join->left_table = 'node';
+      $join->field = 'entity_id';
+      $join->left_field = 'nid';
+      $join->extra[] = array('field' => 'field_sponsored_value', 'value' => '1');
+      $join->type = 'LEFT';
+      $join->extra_type = 'OR';
+      $query->table_queue['field_data_field_sponsored'] = array(
+        'table' => 'field_data_field_sponsored',
+        'alias' => 'field_data_field_sponsored',
+        'num' => 1,
+        'relationship' => 'node',
+        'join' => $join,
+      );
+      $query->where[]['conditions'][] = array(
+        'field' => 'field_data_field_sponsored.field_sponsored_value',
+        'value' => '',
+        'operator' => 'IS NULL',
+      );
+      break;
+  }
+}
+
+/**
+ * Determine whether the node is sponsored or not.
+ *
+ * @param object $node
+ *   The node object.
+ */
+function dennis_client_node_is_sponsored($node) {
+  // If a site uses the "article_type" taxonomy to mark articles as sponsored
+  // (the old deprecated way), it should set a variable with the tid of the
+  // "sponsored" term or implement dennis_client_node_is_sponsored_alter().
+  $sponsored_tid = variable_get('dennis_client_sponsored_tid', FALSE);
+
+  $sponsored = FALSE;
+
+  // If sponsored checkbox is ticked.
+  if (!empty($node->field_sponsored[LANGUAGE_NONE][0]['value'])) {
+    $sponsored = TRUE;
+  }
+
+  // If article type "sponsored" is selected.
+  if (!$sponsored && $sponsored_tid && !empty($node->field_article_type[LANGUAGE_NONE][0]['tid'])
+    && $node->field_article_type[LANGUAGE_NONE][0]['tid'] == $sponsored_tid) {
+    $sponsored = TRUE;
+  }
+
+  // Give site modules a chance to decide if the node is really sponsored.
+  drupal_alter('dennis_client_node_is_sponsored', $sponsored, $node);
+
+  return $sponsored;
+}
+
+/**
+ * Implements hook_module_implements_alter().
+ */
+function dennis_client_module_implements_alter(&$implementations, $hook) {
+  if ($hook == 'dfp_global_targeting_alter' && isset($implementations['dennis_dfp'])) {
+    // Save dennis_client implementation and remove it from the main array.
+    $dennis_client_implementation = $implementations['dennis_client'];
+    unset($implementations['dennis_client']);
+    $updated_implementations = array();
+    foreach ($implementations as $key => $val) {
+      // Duplicate existing implementations array.
+      $updated_implementations[$key] = $val;
+      // Append dennis_client straight after dennis_dfp but before any other
+      // implementation.
+      if ($key == 'dennis_dfp') {
+        $updated_implementations['dennis_client'] = $dennis_client_implementation;
+      }
+    }
+    // Setting implementations.
+    $implementations = $updated_implementations;
+  }
+}
