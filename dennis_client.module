@@ -311,10 +311,15 @@ function dennis_client_views_query_alter(&$view, &$query) {
         'relationship' => 'node',
         'join' => $join,
       );
-      $query->where[]['conditions'][] = array(
-        'field' => 'field_data_field_sponsored.field_sponsored_value',
-        'value' => '',
-        'operator' => 'IS NULL',
+      $query->where[] = array(
+        'conditions' => array(
+          array(
+            'field' => 'field_data_field_sponsored.field_sponsored_value',
+            'value' => '',
+            'operator' => 'IS NULL',
+          )
+        ),
+        'type' => 'AND',
       );
       break;
   }
