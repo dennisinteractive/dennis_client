@@ -378,3 +378,48 @@ function dennis_client_module_implements_alter(&$implementations, $hook) {
     $implementations = $updated_implementations;
   }
 }
+
+/**
+ * Implements hook_taxonomy_term_view().
+ * @param $term
+ * @param $view_mode
+ * @param $langcode
+ */
+function dennis_client_taxonomy_term_view($term, $view_mode, $langcode) {
+  // If the user is anonymous and the vocabulary is content_partnerships, then return 404.
+  if ($term->vocabulary_machine_name == 'content_partnerships' && user_is_anonymous()) {
+    drupal_not_found();
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ * @param $form
+ * @param $form_state
+ * @param $form_id
+ */
+function dennis_client_form_alter(&$form, &$form_state, $form_id) {
+  $form_ids = array(
+    'article_node_form',
+    'review_node_form',
+  );
+  if (in_array($form_id, $form_ids)) {
+    drupal_add_js(drupal_get_path('module', 'dennis_client') . '/js/dennis_client_xmlsitemap.js');
+    $form['#after_build'][] = '_dennis_client_form_after_build';
+    $form['field_content_partnerships']['#states'] =  array(
+      'invisible' => array(
+        'select[name="field_client[und]"]' => array('value' => '_none'),
+      ),
+    );
+  }
+}
+
+/**
+ * After build function for field_content_partnerships.
+ * @param $form
+ * @param $form_state
+ */
+function _dennis_client_form_after_build($form, &$form_state) {
+  $form['field_content_partnerships'][LANGUAGE_NONE]['#options']['_none'] = t('Impartial');
+  return $form;
+}

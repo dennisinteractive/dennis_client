@@ -39,3 +39,79 @@ function dennis_client_update_7101() {
     'add_feed' => 1,
   ));
 }
+
+/**
+ * Create vocabulary and terms programmatically.
+ */
+function dennis_client_update_7102() {
+  // Create content_partnerships vocabulary.
+  $new_vocab = (object) array(
+    'name' => 'Content Partnerships',
+    'machine_name' => 'content_partnerships',
+    'description' => '',
+    'hierarchy' => '0',
+    'module' => 'taxonomy',
+    'weight' => '0',
+  );
+  taxonomy_vocabulary_save($new_vocab);
+
+  // Create its terms.
+  $vocabulary = taxonomy_vocabulary_machine_name_load('content_partnerships');
+  if ($vocabulary->vid) {
+    $terms = array(
+      'Sponsored' => 0,
+      'Advertisement Feature' => 1,
+    );
+    foreach ($terms as $name => $weight) {
+      $term = new stdClass();
+      $term->name = $name;
+      $term->vid = $vocabulary->vid;
+      $term->weight = $weight;
+      taxonomy_term_save($term);
+    }
+  }
+}
+
+/**
+ * Create field_content_partnership programmatically and delete field_sponsored.
+ */
+function dennis_client_update_7103() {
+  // Create field_content_partnerships field.
+  $field = array(
+    'field_name' => 'field_content_partnerships',
+    'type' => 'taxonomy_term_reference',
+    'settings' => array(
+      'allowed_values' => array(
+        array(
+          'vocabulary' => 'content_partnerships',
+          'parent' => 0
+        ),
+      ),
+    ),
+  );
+  field_create_field($field);
+
+  // Create field_content_partnerships instances.
+  $content_types = array('article', 'review');
+  foreach ($content_types as $type) {
+    $field_client_instance = field_info_instance('node', 'field_client', $type);
+    $weight = $field_client_instance['widget']['weight'] + 0.2; // Get field_client weight.
+    $instance = array(
+      'field_name' => 'field_content_partnerships',
+      'entity_type' => 'node',
+      'label' => t('This content is part of a Content Partnership. How impartial is it?'),
+      'description' => t('When content is part of a Content Partnership you need to define how impartial the content is. Think about the level of editorial independence there was when the content was created.'),
+      'bundle' => $type,
+      'required' => false,
+      'widget' => array(
+        'type' => 'options_select',
+        'weight' => $weight,
+      ),
+    );
+    field_create_instance($instance);
+  }
+
+  // Delete field_sponsored.
+  field_delete_field('field_sponsored');
+  field_purge_batch(1);
+}
