@@ -297,16 +297,16 @@ function dennis_client_views_query_alter(&$view, &$query) {
     case 'xmlsitemap_news':
       // Joining sponsored field to the xmlsitemap_view.
       $join = new views_join();
-      $join->table = 'field_data_field_sponsored';
+      $join->table = 'field_data_field_content_partnerships';
       $join->left_table = 'node';
       $join->field = 'entity_id';
       $join->left_field = 'nid';
-      $join->extra[] = array('field' => 'field_sponsored_value', 'value' => '1');
+      $join->extra[] = array('field' => 'field_content_partnerships_tid', 'value' => '5129');
       $join->type = 'LEFT';
       $join->extra_type = 'OR';
-      $query->table_queue['field_data_field_sponsored'] = array(
-        'table' => 'field_data_field_sponsored',
-        'alias' => 'field_data_field_sponsored',
+      $query->table_queue['field_data_field_content_partnerships'] = array(
+        'table' => 'field_data_field_content_partnerships',
+        'alias' => 'field_data_field_content_partnerships',
         'num' => 1,
         'relationship' => 'node',
         'join' => $join,
@@ -314,7 +314,7 @@ function dennis_client_views_query_alter(&$view, &$query) {
       $query->where[] = array(
         'conditions' => array(
           array(
-            'field' => 'field_data_field_sponsored.field_sponsored_value',
+            'field' => 'field_data_field_content_partnerships.field_content_partnerships_tid',
             'value' => '',
             'operator' => 'IS NULL',
           )
@@ -339,9 +339,11 @@ function dennis_client_node_is_sponsored($node) {
 
   $sponsored = FALSE;
 
-  // If sponsored checkbox is ticked.
-  if (!empty($node->field_sponsored[LANGUAGE_NONE][0]['value'])) {
-    $sponsored = TRUE;
+  // If sponsored is selected in field_content_partnerships.
+  if (!empty($node->field_content_partnerships)) {
+    if (taxonomy_term_load($node->field_content_partnerships[LANGUAGE_NONE][0]['tid'])->name) {
+      $sponsored = TRUE;
+    }
   }
 
   // If article type "sponsored" is selected.

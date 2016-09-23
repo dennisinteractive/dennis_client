@@ -9,7 +9,7 @@
  */
 function dennis_client_install() {
   // Add the fields to Article, Reviews.
-  $fields = array('field_client', 'field_sponsored');
+  $fields = array('field_client'); // field_sponsored has been removed.
   $bundles = array('article', 'review');
   foreach ($fields as $field) {
     dennis_client_ensure_field($field, $bundles);
@@ -20,7 +20,8 @@ function dennis_client_install() {
  * Ensure sponsored field exists for article and review node types.
  */
 function dennis_client_update_7100() {
-  dennis_client_ensure_field('field_sponsored');
+  // field_sponsored has been removed.
+  //dennis_client_ensure_field('field_sponsored');
 }
 
 /**
@@ -73,7 +74,7 @@ function dennis_client_update_7102() {
 }
 
 /**
- * Create field_content_partnership programmatically and delete field_sponsored.
+ * Create field_content_partnership programmatically.
  */
 function dennis_client_update_7103() {
   // Create field_content_partnerships field.
@@ -109,6 +110,42 @@ function dennis_client_update_7103() {
       ),
     );
     field_create_instance($instance);
+  }
+}
+
+/**
+ * Migrate field_sponsored and delete it.
+ */
+function dennis_client_update_7104() {
+  // Store all the nids that have field_sponsored checked.
+  $entity_ids = array();
+  $result = db_select('field_data_field_sponsored', 'fdfs')
+    ->fields('fdfs', array('entity_id'))
+    ->condition('field_sponsored_value', 1, '=')
+    ->execute()
+    ->fetchAll();
+  foreach ($result as $key => $value) {
+    $entity_ids[] = $value->entity_id;
+  }
+
+  // Get the tid in the new vocabulary
+  $name = 'content_partnerships';
+  $vocabulary = taxonomy_vocabulary_machine_name_load($name);
+  $tree = taxonomy_get_tree($vocabulary->vid);
+  foreach ($tree as $term) {
+    if ($term->name == 'Sponsored') {
+      $tid = $term->tid;
+    }
+  }
+
+  // Migrate the value of the field_sponsored to field_content_partnerships.
+  if (isset($tid)) {
+    foreach ($entity_ids as $nid) {
+      $node = node_load($nid);
+      $node->field_content_partnerships[LANGUAGE_NONE][0]['tid'] = $tid;
+      field_attach_update('node', $node);
+      entity_get_controller('node')->resetCache(array($node->nid));
+    }
   }
 
   // Delete field_sponsored.
