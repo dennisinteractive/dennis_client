@@ -247,6 +247,28 @@ function dennis_client_views_default_views_alter(&$views) {
     );
     $client_filter['type'] = 'select';
     $client_filter['vocabulary'] = 'clients';
+
+    $content_partnership_filter = &$views['content_administration']->display['default']->display_options['filters']['field_content_partnerships_tid'];
+    /* Filter criterion: Content: Content Partnerships (content_partnerships) */
+    $content_partnership_filter['id'] = 'field_content_partnerships_tid';
+    $content_partnership_filter['table'] = 'field_data_field_content_partnerships';
+    $content_partnership_filter['field'] = 'field_content_partnerships_tid';
+    $content_partnership_filter['value'] = '';
+    $content_partnership_filter['exposed'] = TRUE;
+    $content_partnership_filter['expose']['operator_id'] = 'field_content_partnerships_tid_op';
+    $content_partnership_filter['expose']['label'] = 'Content Partnerships';
+    $content_partnership_filter['expose']['operator'] = 'field_content_partnerships_tid_op';
+    $content_partnership_filter['expose']['identifier'] = 'field_content_partnerships_tid';
+    $content_partnership_filter['expose']['remember_roles'] = array(
+      2 => '2',
+      1 => 0,
+      3 => 0,
+      5 => 0,
+      6 => 0,
+      4 => 0,
+    );
+    $content_partnership_filter['type'] = 'select';
+    $content_partnership_filter['vocabulary'] = 'content_partnerships';
   }
 
   // If the sponsored tid is set, exclude from xml news sitemap.
