@@ -17,6 +17,26 @@ function dennis_client_install() {
 }
 
 /**
+ * Implements hook_requirements().
+ */
+function dennis_client_requirements($phase) {
+  $t = get_t();
+  if ($phase == 'runtime') {
+    if (
+      field_info_instance('node', 'field_sponsored', 'article') ||
+      field_info_instance('node', 'field_sponsored', 'review')
+    ) {
+      $requirements['dennis_client_field_sponsored'] = array(
+        'title' => $t('The field "field_sponsored" still exists.'),
+        'value' => $t('The field should have been removed in dennis_client_update_7104.'),
+        'severity' => REQUIREMENT_ERROR,
+      );
+      return $requirements;
+    }
+  }
+}
+
+/**
  * Ensure sponsored field exists for article and review node types.
  */
 function dennis_client_update_7100() {
@@ -42,19 +62,25 @@ function dennis_client_update_7101() {
 }
 
 /**
- * Create vocabulary and terms programmatically.
+ * Create vocabulary (if it doesn't exist) and terms programmatically.
  */
 function dennis_client_update_7102() {
-  // Create content_partnerships vocabulary.
-  $new_vocab = (object) array(
-    'name' => 'Content Partnerships',
-    'machine_name' => 'content_partnerships',
-    'description' => '',
-    'hierarchy' => '0',
-    'module' => 'taxonomy',
-    'weight' => '0',
-  );
-  taxonomy_vocabulary_save($new_vocab);
+  if (!taxonomy_vocabulary_machine_name_load('content_partnerships')) {
+    // Create content_partnerships vocabulary.
+    $new_vocab = (object) array(
+      'name' => 'Content Partnerships',
+      'machine_name' => 'content_partnerships',
+      'description' => '',
+      'hierarchy' => '0',
+      'module' => 'taxonomy',
+      'weight' => '0',
+    );
+    taxonomy_vocabulary_save($new_vocab);
+    $message = 'Vocabulary "content_partnerships" created.';
+  }
+  else {
+    $message = 'Vocabulary "content_partnerships" already exists.';
+  }
 
   // Create its terms.
   $vocabulary = taxonomy_vocabulary_machine_name_load('content_partnerships');
@@ -71,46 +97,54 @@ function dennis_client_update_7102() {
       taxonomy_term_save($term);
     }
   }
+  return $message;
 }
 
 /**
- * Create field_content_partnership programmatically.
+ * Create field_content_partnership programmatically if it doesn't exist.
  */
 function dennis_client_update_7103() {
-  // Create field_content_partnerships field.
-  $field = array(
-    'field_name' => 'field_content_partnerships',
-    'type' => 'taxonomy_term_reference',
-    'settings' => array(
-      'allowed_values' => array(
-        array(
-          'vocabulary' => 'content_partnerships',
-          'parent' => 0
+  if (!field_info_field('field_content_partnerships')) {
+    // Create field_content_partnerships field.
+    $field = array(
+      'field_name' => 'field_content_partnerships',
+      'type' => 'taxonomy_term_reference',
+      'settings' => array(
+        'allowed_values' => array(
+          array(
+            'vocabulary' => 'content_partnerships',
+            'parent' => 0
+          ),
         ),
       ),
-    ),
-  );
-  field_create_field($field);
-
-  // Create field_content_partnerships instances.
-  $content_types = array('article', 'review');
-  foreach ($content_types as $type) {
-    $field_client_instance = field_info_instance('node', 'field_client', $type);
-    $weight = $field_client_instance['widget']['weight'] + 0.2; // Get field_client weight.
-    $instance = array(
-      'field_name' => 'field_content_partnerships',
-      'entity_type' => 'node',
-      'label' => t('This content is part of a Content Partnership. How impartial is it?'),
-      'description' => t('When content is part of a Content Partnership you need to define how impartial the content is. Think about the level of editorial independence there was when the content was created.'),
-      'bundle' => $type,
-      'required' => false,
-      'widget' => array(
-        'type' => 'options_select',
-        'weight' => $weight,
-      ),
     );
-    field_create_instance($instance);
+    field_create_field($field);
+
+    // Create field_content_partnerships instances.
+    $content_types = array('article', 'review');
+    foreach ($content_types as $type) {
+      $field_client_instance = field_info_instance('node', 'field_client', $type);
+      $weight = $field_client_instance['widget']['weight'] + 0.2; // Get field_client weight.
+      $instance = array(
+        'field_name' => 'field_content_partnerships',
+        'entity_type' => 'node',
+        'label' => t('This content is part of a Content Partnership. How impartial is it?'),
+        'description' => t('When content is part of a Content Partnership you need to define how impartial the content is. Think about the level of editorial independence there was when the content was created.'),
+        'bundle' => $type,
+        'required' => false,
+        'widget' => array(
+          'type' => 'options_select',
+          'weight' => $weight,
+        ),
+      );
+      field_create_instance($instance);
+    }
+    $message = 'Field "field_content_partnerships" created.';
   }
+  else {
+    $message = 'The field "field_content_partnerships" already exists.';
+  }
+  return $message;
 }
 
 /**
