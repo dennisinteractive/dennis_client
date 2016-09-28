@@ -306,6 +306,10 @@ function dennis_client_node_view($node, $view_mode, $langcode) {
       );
       drupal_add_html_head($element, 'googlebot-news');
     }
+    // Fire our context plugin when viewing nodes.
+    if ($plugin = context_get_plugin('condition', 'context_condition_content_partnerships')) {
+      $plugin->execute($node);
+    }
   }
 }
 
@@ -522,4 +526,39 @@ function dennis_client_block_view($delta = '') {
       break;
   }
   return $block;
+}
+
+/**
+ * Implements hook_context_plugins().
+ *
+ */
+function dennis_client_context_plugins() {
+  $plugins = array(
+    'context_condition_content_partnerships' => array(
+      'handler' => array(
+        'path' => drupal_get_path('module', 'dennis_client') . '/plugins/context',
+        'file' => 'context_condition_content_partnerships.inc',
+        'class' => 'context_condition_content_partnerships',
+        'parent' => 'context_condition',
+      ),
+    ),
+  );
+  return $plugins;
+}
+
+/**
+ * Implements hook_context_registry().
+ *
+ */
+function dennis_client_context_registry() {
+  $registry = array(
+    'conditions' => array(
+      'context_condition_content_partnerships' => array(
+        'title' => t('Content partnerships'),
+        'description' => t('Condition to enable/disable content partnerships in nodes'),
+        'plugin' => 'context_condition_content_partnerships',
+      ),
+    ),
+  );
+  return $registry;
 }
