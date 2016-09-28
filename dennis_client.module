@@ -426,11 +426,17 @@ function dennis_client_form_alter(&$form, &$form_state, $form_id) {
   $form_ids = array(
     'article_node_form',
     'review_node_form',
+    'gallery_adv_node_form',
   );
   if (in_array($form_id, $form_ids)) {
     drupal_add_js(drupal_get_path('module', 'dennis_client') . '/js/dennis_client_xmlsitemap.js');
     $form['#after_build'][] = '_dennis_client_form_after_build';
     $form['field_content_partnerships']['#states'] =  array(
+      'invisible' => array(
+        'select[name="field_client[und]"]' => array('value' => '_none'),
+      ),
+    );
+    $form['field_exclude_client_branding']['#states'] =  array(
       'invisible' => array(
         'select[name="field_client[und]"]' => array('value' => '_none'),
       ),
@@ -446,4 +452,74 @@ function dennis_client_form_alter(&$form, &$form_state, $form_id) {
 function _dennis_client_form_after_build($form, &$form_state) {
   $form['field_content_partnerships'][LANGUAGE_NONE]['#options']['_none'] = t('Impartial');
   return $form;
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function dennis_client_block_info() {
+  $blocks['content_partnerships_block'] = array(
+    'info' => t('Content partnerships block'),
+    'cache' => DRUPAL_NO_CACHE,
+  );
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function dennis_client_block_view($delta = '') {
+  $content = '';
+  $block = array();
+  switch ($delta) {
+    case 'content_partnerships_block':
+      if (arg(0) == 'node' && (int)arg(1) != 0) {
+        $nid = arg(1);
+        $result = db_select('field_data_field_client', 'fdfcp')
+          ->fields('fdfcp', array('field_client_tid'))
+          ->condition('entity_id', $nid, '=')
+          ->execute()
+          ->fetchAssoc();
+        if ($result) {
+          $content = '<div class="content_partnerships">';
+          $tid = $result['field_client_tid'];
+          $term = taxonomy_term_load($tid);
+
+          // Check if it's png.
+          if ($term->field_client_logo[LANGUAGE_NONE][0]['filemime'] == 'image/png') {
+            $image = theme_image(array('path' => $term->field_client_logo[LANGUAGE_NONE][0]['uri'], 'attributes' => array()));
+          }
+          // Or svg.
+          elseif ($term->field_client_logo[LANGUAGE_NONE][0]['filemime'] == 'image/svg+xml') {
+            $image = file_get_contents($term->field_client_logo[LANGUAGE_NONE][0]['uri']);
+          }
+
+          // Get intro text.
+          if (!empty($term->field_intro_text[LANGUAGE_NONE][0]['safe_value'])) {
+            $intro_text = $term->field_intro_text[LANGUAGE_NONE][0]['safe_value'];
+          }
+          else {
+            $intro_text = '';
+          }
+
+          // Get strap line.
+          if (!empty($term->field_strap_line[LANGUAGE_NONE][0]['safe_value'])) {
+            $strap_line = $term->field_strap_line[LANGUAGE_NONE][0]['safe_value'];
+          }
+          else {
+            $strap_line = '';
+          }
+
+          // Get url.
+          isset($term->field_client_link[LANGUAGE_NONE][0]['url']) ? $url = $term->field_client_link[LANGUAGE_NONE][0]['url'] : $url = '';
+
+          $content .= l($intro_text . $image, $url, array('attributes' => array('target'=>'_blank', 'rel' => 'nofollow'), 'html' => true));
+          $content .= $strap_line . '</div>';
+        }
+      }
+      $block['subject'] = '';
+      $block['content'] = $content;
+      break;
+  }
+  return $block;
 }

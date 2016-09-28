@@ -13,9 +13,10 @@ function dennis_client_taxonomy_default_vocabularies() {
       'name' => 'Clients',
       'machine_name' => 'clients',
       'description' => 'Names of advertising clients',
-      'hierarchy' => 0,
+      'hierarchy' => '1',
       'module' => 'taxonomy',
-      'weight' => 0,
+      'weight' => '0',
+      'rdf_mapping' => array(),
     ),
   );
 }
