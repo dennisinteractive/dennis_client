@@ -28,7 +28,7 @@ function dennis_client_requirements($phase) {
     ) {
       $requirements['dennis_client_field_sponsored'] = array(
         'title' => $t('The field "field_sponsored" still exists.'),
-        'value' => $t('The field should have been removed in dennis_client_update_7104.'),
+        'value' => $t('The field should have been removed in dennis_client_update_7105.'),
         'severity' => REQUIREMENT_ERROR,
       );
       return $requirements;
