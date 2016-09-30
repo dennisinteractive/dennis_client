@@ -485,40 +485,41 @@ function dennis_client_block_view($delta = '') {
           ->execute()
           ->fetchAssoc();
         if ($result) {
-          $content = '<div class="content_partnerships">';
           $tid = $result['field_client_tid'];
           $term = taxonomy_term_load($tid);
+          if (!empty($term->field_client_logo)) {
+            $content = '<div class="content_partnerships">';
+            // Check if it's png.
+            if ($term->field_client_logo[LANGUAGE_NONE][0]['filemime'] == 'image/png') {
+              $image = theme_image(array('path' => $term->field_client_logo[LANGUAGE_NONE][0]['uri'], 'attributes' => array()));
+            }
+            // Or svg.
+            elseif ($term->field_client_logo[LANGUAGE_NONE][0]['filemime'] == 'image/svg+xml') {
+              $image = file_get_contents($term->field_client_logo[LANGUAGE_NONE][0]['uri']);
+            }
 
-          // Check if it's png.
-          if ($term->field_client_logo[LANGUAGE_NONE][0]['filemime'] == 'image/png') {
-            $image = theme_image(array('path' => $term->field_client_logo[LANGUAGE_NONE][0]['uri'], 'attributes' => array()));
-          }
-          // Or svg.
-          elseif ($term->field_client_logo[LANGUAGE_NONE][0]['filemime'] == 'image/svg+xml') {
-            $image = file_get_contents($term->field_client_logo[LANGUAGE_NONE][0]['uri']);
-          }
+            // Get intro text.
+            if (!empty($term->field_intro_text[LANGUAGE_NONE][0]['safe_value'])) {
+              $intro_text = $term->field_intro_text[LANGUAGE_NONE][0]['safe_value'];
+            }
+            else {
+              $intro_text = '';
+            }
 
-          // Get intro text.
-          if (!empty($term->field_intro_text[LANGUAGE_NONE][0]['safe_value'])) {
-            $intro_text = $term->field_intro_text[LANGUAGE_NONE][0]['safe_value'];
-          }
-          else {
-            $intro_text = '';
-          }
+            // Get strap line.
+            if (!empty($term->field_strap_line[LANGUAGE_NONE][0]['safe_value'])) {
+              $strap_line = $term->field_strap_line[LANGUAGE_NONE][0]['safe_value'];
+            }
+            else {
+              $strap_line = '';
+            }
 
-          // Get strap line.
-          if (!empty($term->field_strap_line[LANGUAGE_NONE][0]['safe_value'])) {
-            $strap_line = $term->field_strap_line[LANGUAGE_NONE][0]['safe_value'];
-          }
-          else {
-            $strap_line = '';
-          }
+            // Get url.
+            isset($term->field_client_link[LANGUAGE_NONE][0]['url']) ? $url = $term->field_client_link[LANGUAGE_NONE][0]['url'] : $url = '';
 
-          // Get url.
-          isset($term->field_client_link[LANGUAGE_NONE][0]['url']) ? $url = $term->field_client_link[LANGUAGE_NONE][0]['url'] : $url = '';
-
-          $content .= l($intro_text . $image, $url, array('attributes' => array('target'=>'_blank', 'rel' => 'nofollow'), 'html' => true));
-          $content .= $strap_line . '</div>';
+            $content .= l($intro_text . $image, $url, array('attributes' => array('target'=>'_blank', 'rel' => 'nofollow'), 'html' => true));
+            $content .= $strap_line . '</div>';
+          }
         }
       }
       $block['subject'] = '';
