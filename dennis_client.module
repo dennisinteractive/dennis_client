@@ -62,7 +62,7 @@ function dennis_client_dfp_global_targeting_alter(&$targeting) {
     // Add the client key value pair on index pages.
     if (strpos($menu_item['path'], 'taxonomy/term/') !== FALSE && !empty($menu_item['page_arguments'][0])) {
       $term = taxonomy_term_load($menu_item['page_arguments'][0]);
-      if ($term->vocabulary_machine_name == 'clients') {
+      if (isset($term->vocabulary_machine_name) && $term->vocabulary_machine_name == 'clients') {
         $client_page = TRUE;
       }
     }
