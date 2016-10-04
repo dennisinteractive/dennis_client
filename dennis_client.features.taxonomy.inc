@@ -16,7 +16,6 @@ function dennis_client_taxonomy_default_vocabularies() {
       'hierarchy' => '1',
       'module' => 'taxonomy',
       'weight' => '0',
-      'rdf_mapping' => array(),
     ),
   );
 }
