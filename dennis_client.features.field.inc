@@ -46,6 +46,13 @@ function dennis_client_field_default_fields() {
       'deleted' => '0',
       'description' => '',
       'display' => array(
+        'content_partnership' => array(
+          'label' => 'hidden',
+          'module' => 'link',
+          'settings' => array(),
+          'type' => 'link_absolute',
+          'weight' => '4',
+        ),
         'default' => array(
           'label' => 'above',
           'module' => 'link',
@@ -69,7 +76,7 @@ function dennis_client_field_default_fields() {
           'label' => 'above',
           'settings' => array(),
           'type' => 'hidden',
-          'weight' => 0,
+          'weight' => '8',
         ),
       ),
       'entity_type' => 'taxonomy_term',
@@ -145,6 +152,15 @@ function dennis_client_field_default_fields() {
       'deleted' => '0',
       'description' => '',
       'display' => array(
+        'content_partnership' => array(
+          'label' => 'hidden',
+          'module' => 'file_entity',
+          'settings' => array(
+            'file_view_mode' => 'media_original',
+          ),
+          'type' => 'file_rendered',
+          'weight' => '2',
+        ),
         'default' => array(
           'label' => 'above',
           'module' => 'file',
@@ -165,10 +181,13 @@ function dennis_client_field_default_fields() {
           'weight' => 0,
         ),
         'teaser' => array(
-          'label' => 'above',
-          'settings' => array(),
-          'type' => 'hidden',
-          'weight' => 0,
+          'label' => 'hidden',
+          'module' => 'file_entity',
+          'settings' => array(
+            'file_view_mode' => 'content_original',
+          ),
+          'type' => 'file_rendered',
+          'weight' => '1',
         ),
       ),
       'entity_type' => 'taxonomy_term',
@@ -229,6 +248,13 @@ function dennis_client_field_default_fields() {
       'deleted' => '0',
       'description' => '',
       'display' => array(
+        'content_partnership' => array(
+          'label' => 'hidden',
+          'module' => 'text',
+          'settings' => array(),
+          'type' => 'text_default',
+          'weight' => '1',
+        ),
         'default' => array(
           'label' => 'above',
           'module' => 'text',
@@ -252,7 +278,7 @@ function dennis_client_field_default_fields() {
           'label' => 'above',
           'settings' => array(),
           'type' => 'hidden',
-          'weight' => 0,
+          'weight' => '3',
         ),
       ),
       'entity_type' => 'taxonomy_term',
@@ -311,6 +337,12 @@ function dennis_client_field_default_fields() {
       'deleted' => '0',
       'description' => '',
       'display' => array(
+        'content_partnership' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => '7',
+        ),
         'default' => array(
           'label' => 'above',
           'module' => 'list',
@@ -334,7 +366,7 @@ function dennis_client_field_default_fields() {
           'label' => 'above',
           'settings' => array(),
           'type' => 'hidden',
-          'weight' => 0,
+          'weight' => '6',
         ),
       ),
       'entity_type' => 'taxonomy_term',
@@ -395,6 +427,13 @@ function dennis_client_field_default_fields() {
       'deleted' => '0',
       'description' => '',
       'display' => array(
+        'content_partnership' => array(
+          'label' => 'hidden',
+          'module' => 'text',
+          'settings' => array(),
+          'type' => 'text_default',
+          'weight' => '0',
+        ),
         'default' => array(
           'label' => 'above',
           'module' => 'text',
@@ -415,10 +454,11 @@ function dennis_client_field_default_fields() {
           'weight' => 0,
         ),
         'teaser' => array(
-          'label' => 'above',
+          'label' => 'hidden',
+          'module' => 'text',
           'settings' => array(),
-          'type' => 'hidden',
-          'weight' => 0,
+          'type' => 'text_default',
+          'weight' => '0',
         ),
       ),
       'entity_type' => 'taxonomy_term',
@@ -476,6 +516,13 @@ function dennis_client_field_default_fields() {
       'deleted' => '0',
       'description' => '',
       'display' => array(
+        'content_partnership' => array(
+          'label' => 'hidden',
+          'module' => 'text',
+          'settings' => array(),
+          'type' => 'text_default',
+          'weight' => '3',
+        ),
         'default' => array(
           'label' => 'above',
           'module' => 'text',
@@ -496,10 +543,11 @@ function dennis_client_field_default_fields() {
           'weight' => 0,
         ),
         'teaser' => array(
-          'label' => 'above',
+          'label' => 'hidden',
+          'module' => 'text',
           'settings' => array(),
-          'type' => 'hidden',
-          'weight' => 0,
+          'type' => 'text_default',
+          'weight' => '2',
         ),
       ),
       'entity_type' => 'taxonomy_term',
