@@ -415,8 +415,34 @@ function dennis_client_module_implements_alter(&$implementations, $hook) {
  */
 function dennis_client_taxonomy_term_view($term, $view_mode, $langcode) {
   // If the user is anonymous and the vocabulary is content_partnerships, then return 404.
-  if ($term->vocabulary_machine_name == 'content_partnerships' && user_is_anonymous()) {
+  if ($term->vocabulary_machine_name == 'content_partnerships' && $view_mode == 'full' && user_is_anonymous()) {
     drupal_not_found();
+  }
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ * @param $variables
+ */
+function dennis_client_preprocess_taxonomy_term(&$variables) {
+  if ($variables['view_mode'] == 'content_partnership') {
+    $term = $variables['term'];
+
+    // Wrap content with link.
+    if (isset($term->field_client_link[LANGUAGE_NONE][0])) {
+      $content = render($variables['content']);
+      $url = $term->field_client_link[LANGUAGE_NONE][0]['url'];
+      $options = array(
+        'html' => TRUE,
+        'absolute' => TRUE,
+        'attributes' => array(
+          'target' => '_blank',
+          'rel' => 'nofollow',
+        ),
+      );
+      $content = l($content, $url, $options);
+      $variables['content'] = array('link' => array('#markup' => $content));
+    }
   }
 }
 
@@ -493,16 +519,9 @@ function dennis_client_block_view($delta = '') {
         $term = $wrapper->field_client->value();
 
         $block['subject'] = '';
-
-        // Get the link.
-        $link = $term->field_client_link[$node->language][0];
-        $link = theme('link_formatter_link_plain', array('element' => $link));
-        // Hide link.
-        unset($term->field_client_link);
-
-        $content = render(taxonomy_term_view($term, 'content_partnership', $node->language));
-        $block['content']['#markup'] = l($content, $link, array('html' => TRUE));
+        $block['content'] = taxonomy_term_view($term, 'content_partnership', $node->language);
       }
+
       break;
   }
 
