@@ -470,62 +470,42 @@ function dennis_client_block_info() {
 }
 
 /**
+ * Implements hook_entity_info_alter()
+ */
+function dennis_client_entity_info_alter(&$entity_info) {
+  // New node view mode.
+  $entity_info['taxonomy_term']['view modes']['content_partnership'] = array(
+    'label' => t('Content Partnership'),
+    'custom settings' => TRUE,
+  );
+}
+
+/**
  * Implements hook_block_view().
  */
 function dennis_client_block_view($delta = '') {
-  $content = '';
   $block = array();
   switch ($delta) {
     case 'content_partnerships_block':
-      if (arg(0) == 'node' && (int)arg(1) != 0) {
-        $nid = arg(1);
-        $result = db_select('field_data_field_client', 'fdfcp')
-          ->fields('fdfcp', array('field_client_tid'))
-          ->condition('entity_id', $nid, '=')
-          ->execute()
-          ->fetchAssoc();
-        if ($result) {
-          $tid = $result['field_client_tid'];
-          $term = taxonomy_term_load($tid);
-          if (!empty($term->field_client_logo)) {
-            $content = '<div class="content_partnerships">';
-            // Check if it's png.
-            if ($term->field_client_logo[LANGUAGE_NONE][0]['filemime'] == 'image/png') {
-              $image = theme_image(array('path' => $term->field_client_logo[LANGUAGE_NONE][0]['uri'], 'attributes' => array()));
-            }
-            // Or svg.
-            elseif ($term->field_client_logo[LANGUAGE_NONE][0]['filemime'] == 'image/svg+xml') {
-              $image = file_get_contents($term->field_client_logo[LANGUAGE_NONE][0]['uri']);
-            }
+      $node = menu_get_object();
+      if (isset($node->nid) && is_numeric($node->nid)) {
+        $wrapper = entity_metadata_wrapper('node', $node);
+        $term = $wrapper->field_client->value();
 
-            // Get intro text.
-            if (!empty($term->field_intro_text[LANGUAGE_NONE][0]['safe_value'])) {
-              $intro_text = $term->field_intro_text[LANGUAGE_NONE][0]['safe_value'];
-            }
-            else {
-              $intro_text = '';
-            }
+        $block['subject'] = '';
 
-            // Get strap line.
-            if (!empty($term->field_strap_line[LANGUAGE_NONE][0]['safe_value'])) {
-              $strap_line = $term->field_strap_line[LANGUAGE_NONE][0]['safe_value'];
-            }
-            else {
-              $strap_line = '';
-            }
+        // Get the link.
+        $link = $term->field_client_link[$node->language][0];
+        $link = theme('link_formatter_link_plain', array('element' => $link));
+        // Hide link.
+        unset($term->field_client_link);
 
-            // Get url.
-            isset($term->field_client_link[LANGUAGE_NONE][0]['url']) ? $url = $term->field_client_link[LANGUAGE_NONE][0]['url'] : $url = '';
-
-            $content .= l($intro_text . $image, $url, array('attributes' => array('target'=>'_blank', 'rel' => 'nofollow'), 'html' => true));
-            $content .= $strap_line . '</div>';
-          }
-        }
+        $content = render(taxonomy_term_view($term, 'content_partnership', $node->language));
+        $block['content']['#markup'] = l($content, $link, array('html' => TRUE));
       }
-      $block['subject'] = '';
-      $block['content'] = $content;
       break;
   }
+
   return $block;
 }
 
