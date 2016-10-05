@@ -448,7 +448,9 @@ function dennis_client_form_alter(&$form, &$form_state, $form_id) {
  * @param $form_state
  */
 function _dennis_client_form_after_build($form, &$form_state) {
+  // Change the label of _none.
   $form['field_content_partnerships'][LANGUAGE_NONE]['#options']['_none'] = t('Impartial');
+
   return $form;
 }
 
@@ -456,10 +458,11 @@ function _dennis_client_form_after_build($form, &$form_state) {
  * Implements hook_block_info().
  */
 function dennis_client_block_info() {
-  $blocks['content_partnerships_block'] = array(
-    'info' => t('Content partnerships block'),
-    'cache' => DRUPAL_NO_CACHE,
+  $blocks['content_partnerships'] = array(
+    'info' => t('Content partnerships'),
+    'cache' => DRUPAL_CACHE_CUSTOM,
   );
+
   return $blocks;
 }
 
@@ -480,13 +483,34 @@ function dennis_client_entity_info_alter(&$entity_info) {
 function dennis_client_block_view($delta = '') {
   $block = array();
   switch ($delta) {
-    case 'content_partnerships_block':
+    case 'content_partnerships':
       $node = menu_get_object();
       if (isset($node->nid) && is_numeric($node->nid)) {
         $wrapper = entity_metadata_wrapper('node', $node);
+
         if ($term = $wrapper->field_client->value()) {
-          $block['subject'] = '';
-          $block['content'] = taxonomy_term_view($term, 'content_partnership', $node->language);
+          // Create cid using all arguments.
+          $cid_parts = array(
+            'block:dennis_client_partnerships',
+            $term->tid,
+          );
+
+          // Cache per role.
+          $cid_parts = array_merge($cid_parts, drupal_render_cid_parts(DRUPAL_CACHE_PER_ROLE));
+          $cid = implode(':', $cid_parts);
+
+          if ($cached_block = cache_get($cid, 'cache_block')) {
+            $block = $cached_block->data;
+          }
+          else {
+            $block['subject'] = '';
+            // Render the term and cache the rendered output.
+            $block['content'] = drupal_render(taxonomy_term_view($term, 'content_partnership', $node->language));
+
+            if (variable_get('block_cache', FALSE)) {
+              cache_set($cid, $block, 'cache_block', CACHE_TEMPORARY);
+            }
+          }
         }
       }
 

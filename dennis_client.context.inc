@@ -36,9 +36,9 @@ function dennis_client_context_default_contexts() {
   $context->reactions = array(
     'block' => array(
       'blocks' => array(
-        'dennis_client-content_partnerships_block' => array(
+        'dennis_client-content_partnerships' => array(
           'module' => 'dennis_client',
-          'delta' => 'content_partnerships_block',
+          'delta' => 'content_partnerships',
           'region' => 'content_top',
           'weight' => '-10',
         ),
