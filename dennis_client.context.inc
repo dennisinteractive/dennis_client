@@ -14,7 +14,7 @@ function dennis_client_context_default_contexts() {
   $context->disabled = FALSE; /* Edit this to true to make a default context disabled initially */
   $context->api_version = 3;
   $context->name = 'content_partnerships';
-  $context->description = 'Load the content partnerships block in the content top region.';
+  $context->description = 'Show the content partnerships block in the content top region.';
   $context->tag = 'Client';
   $context->conditions = array(
     'context_condition_content_partnerships' => array(
@@ -50,7 +50,7 @@ function dennis_client_context_default_contexts() {
   // Translatables
   // Included for use with string extractors like potx.
   t('Client');
-  t('Load the content partnerships block in the content top region.');
+  t('Show the content partnerships block in the content top region.');
   $export['content_partnerships'] = $context;
 
   return $export;
