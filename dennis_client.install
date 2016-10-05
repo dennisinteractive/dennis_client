@@ -10,7 +10,7 @@
 function dennis_client_install() {
   // Add the fields to Article, Reviews.
   $fields = array('field_client');
-  $bundles = array('article', 'review');
+  $bundles = array('article', 'review', 'gallery_adv');
   foreach ($fields as $field) {
     dennis_client_ensure_field($field, $bundles);
   }
@@ -82,10 +82,10 @@ function dennis_client_update_7102() {
       'weight' => '0',
     );
     taxonomy_vocabulary_save($new_vocab);
-    $message = 'Vocabulary "content_partnerships" created.';
+    drupal_set_message(t('Vocabulary !name has been created.', array('!name' => 'content_partnerships')));
   }
   else {
-    $message = 'Vocabulary "content_partnerships" already exists.';
+    drupal_set_message(t('Vocabulary !name already exists.', array('!name' => 'content_partnerships')));
   }
 
   // Create its terms.
@@ -103,7 +103,6 @@ function dennis_client_update_7102() {
       taxonomy_term_save($term);
     }
   }
-  return $message;
 }
 
 /**
