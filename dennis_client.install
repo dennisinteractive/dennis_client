@@ -8,6 +8,9 @@
  * Implements hook_install().
  */
 function dennis_client_install() {
+  // Create taxonomy.
+  _dennis_client_create_taxonomy();
+
   // Add the fields to Article, Reviews.
   $fields = array('field_client');
   $bundles = array('article', 'review', 'gallery_adv');
@@ -83,38 +86,8 @@ function dennis_client_update_7101() {
  * Create vocabulary (if it doesn't exist) and terms programmatically.
  */
 function dennis_client_update_7102() {
-  if (!taxonomy_vocabulary_machine_name_load('content_partnerships')) {
-    // Create content_partnerships vocabulary.
-    $new_vocab = (object) array(
-      'name' => 'Content Partnerships',
-      'machine_name' => 'content_partnerships',
-      'description' => '',
-      'hierarchy' => '0',
-      'module' => 'taxonomy',
-      'weight' => '0',
-    );
-    taxonomy_vocabulary_save($new_vocab);
-    drupal_set_message(t('Vocabulary !name has been created.', array('!name' => 'content_partnerships')));
-  }
-  else {
-    drupal_set_message(t('Vocabulary !name already exists.', array('!name' => 'content_partnerships')));
-  }
-
-  // Create its terms.
-  $vocabulary = taxonomy_vocabulary_machine_name_load('content_partnerships');
-  if ($vocabulary->vid) {
-    $terms = array(
-      'Sponsored' => 0,
-      'Advertisement Feature' => 1,
-    );
-    foreach ($terms as $name => $weight) {
-      $term = new stdClass();
-      $term->name = $name;
-      $term->vid = $vocabulary->vid;
-      $term->weight = $weight;
-      taxonomy_term_save($term);
-    }
-  }
+  // Create taxonomy.
+  _dennis_client_create_taxonomy();
 }
 
 /**
