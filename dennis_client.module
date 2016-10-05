@@ -288,6 +288,7 @@ function dennis_client_views_default_views_alter(&$views) {
 }
 
 //@todo write help hook explaining the functionalities of dennis client
+//@todo update changelog and make file on 7.x
 
 /**
  * Implements hook_node_view().
