@@ -230,6 +230,10 @@ function _dennis_client_revert_field_instance($field_name, $bundle) {
  * Implements hook_views_default_views_alter().
  */
 function dennis_client_views_default_views_alter(&$views) {
+  // Overrides default views
+  // NOTE: This hook only works on views that are not overriden
+  // To see which views are overriden, run drush vl
+  // To revert a view, run drush vr [view name].
   if (isset($views['content_administration'])) {
     $client_filter = &$views['content_administration']->display['default']->display_options['filters']['field_client_tid'];
     /* Filter criterion: Content: Client (field_client) */
@@ -241,6 +245,7 @@ function dennis_client_views_default_views_alter(&$views) {
     $client_filter['expose']['operator_id'] = 'field_client_tid_op';
     $client_filter['expose']['label'] = 'Client';
     $client_filter['expose']['operator'] = 'field_client_tid_op';
+    $client_filter['expose']['multiple'] = TRUE;
     $client_filter['expose']['identifier'] = 'field_client_tid';
     $client_filter['expose']['remember_roles'] = array(
       2 => '2',
@@ -264,6 +269,7 @@ function dennis_client_views_default_views_alter(&$views) {
     $content_partnership_filter['expose']['label'] = 'Content Partnerships';
     $content_partnership_filter['expose']['operator'] = 'field_content_partnerships_tid_op';
     $content_partnership_filter['expose']['identifier'] = 'field_content_partnerships_tid';
+    $content_partnership_filter['expose']['multiple'] = TRUE;
     $content_partnership_filter['expose']['remember_roles'] = array(
       2 => '2',
       1 => 0,
