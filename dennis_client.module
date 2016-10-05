@@ -245,7 +245,6 @@ function dennis_client_views_default_views_alter(&$views) {
     $client_filter['expose']['operator_id'] = 'field_client_tid_op';
     $client_filter['expose']['label'] = 'Client';
     $client_filter['expose']['operator'] = 'field_client_tid_op';
-    $client_filter['expose']['multiple'] = TRUE;
     $client_filter['expose']['identifier'] = 'field_client_tid';
     $client_filter['expose']['remember_roles'] = array(
       2 => '2',
@@ -269,7 +268,6 @@ function dennis_client_views_default_views_alter(&$views) {
     $content_partnership_filter['expose']['label'] = 'Content Partnerships';
     $content_partnership_filter['expose']['operator'] = 'field_content_partnerships_tid_op';
     $content_partnership_filter['expose']['identifier'] = 'field_content_partnerships_tid';
-    $content_partnership_filter['expose']['multiple'] = TRUE;
     $content_partnership_filter['expose']['remember_roles'] = array(
       2 => '2',
       1 => 0,
