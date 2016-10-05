@@ -23,6 +23,18 @@ function dennis_client_dennis_requirements_alter(&$requirements, $phase, $distro
   if ($phase == 'runtime') {
     $t = get_t();
 
+    if (variable_get('dennis_client_sponsored_tid', FALSE)) {
+      $requirements['dennis_client_field_sponsor_variable'] = array(
+        'title' => $t('Dennis Client'),
+        'value' => $t('Distro 1.35.x'),
+        'description' => _dennis_requirements_case_link(25449) .
+          $t('The variable :name is still set. This is the old way of implementing sponsored content.',
+            array(':name' => 'dennis_client_sponsored_tid')
+          ),
+        'severity' => REQUIREMENT_ERROR,
+      );
+    }
+
     $entity_type = 'node';
     $entity_info = entity_get_info();
     foreach ($entity_info[$entity_type]['bundles'] as $bundle) {
