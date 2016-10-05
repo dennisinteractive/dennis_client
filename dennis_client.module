@@ -276,24 +276,6 @@ function dennis_client_views_default_views_alter(&$views) {
     $content_partnership_filter['vocabulary'] = 'content_partnerships';
   }
 
-  // If the sponsored tid is set, exclude from xml news sitemap (legacy)
-  if (isset($views['xmlsitemap_news'])) {
-    if ($sponsored_tid = variable_get('dennis_client_sponsored_tid', FALSE)) { //@todo write a requirement to inform that this is no longer supported
-      $views['xmlsitemap_news']->display['default']->display_options['filters']['field_article_type_tid_1'] = array(
-        'id' => 'field_article_type_tid_1',
-        'table' => 'field_data_field_article_type',
-        'field' => 'field_article_type_tid',
-        'operator' => 'not',
-        'value' => array(
-          $sponsored_tid => $sponsored_tid,
-        ),
-        'type' => 'select',
-        'vocabulary' => 'article_type',
-        'hierarchy' => 1,
-      );
-    }
-  }
-
   // Exclude sponsored content from news.
   $views['xmlsitemap_news']->display['default']->display_options['filters']['field_content_partnerships_tid'] = array(
     'id' => 'field_content_partnerships_tid',
@@ -304,7 +286,9 @@ function dennis_client_views_default_views_alter(&$views) {
     'vocabulary' => 'content_partnerships',
   );
 }
+
 //@todo write help hook explaining the functionalities of dennis client
+
 /**
  * Implements hook_node_view().
  */
@@ -335,11 +319,6 @@ function dennis_client_node_view($node, $view_mode, $langcode) {
  *   The node object.
  */
 function dennis_client_node_is_sponsored($node) {
-  // If a site uses the "article_type" taxonomy to mark articles as sponsored
-  // (the old deprecated way), it should set a variable with the tid of the
-  // "sponsored" term or implement dennis_client_node_is_sponsored_alter().
-  $sponsored_tid = variable_get('dennis_client_sponsored_tid', FALSE);
-
   $sponsored = FALSE;
 
   // If sponsored is selected in field_content_partnerships.
@@ -349,12 +328,6 @@ function dennis_client_node_is_sponsored($node) {
         $sponsored = TRUE;
       }
     }
-  }
-
-  // If article type "sponsored" is selected.
-  if (!$sponsored && $sponsored_tid && !empty($node->field_article_type[LANGUAGE_NONE][0]['tid'])
-    && $node->field_article_type[LANGUAGE_NONE][0]['tid'] == $sponsored_tid) {
-    $sponsored = TRUE;
   }
 
   // Give site modules a chance to decide if the node is really sponsored.
