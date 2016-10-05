@@ -424,12 +424,10 @@ function dennis_client_entity_presave($entity, $type) {
  * @param $form_id
  */
 function dennis_client_form_alter(&$form, &$form_state, $form_id) {
-  $form_ids = array(
-    'article_node_form',
-    'review_node_form',
-    'gallery_adv_node_form',
-  );
-  if (in_array($form_id, $form_ids)) {
+  // Show/hide content partnerships field depending on the value of client.
+  if (isset($form['field_client'])
+    && isset($form['field_content_partnerships']))
+  {
     $form['#after_build'][] = '_dennis_client_form_after_build';
     $form['field_content_partnerships']['#states'] =  array(
       'invisible' => array(
