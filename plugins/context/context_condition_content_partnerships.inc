@@ -18,30 +18,7 @@ class context_condition_content_partnerships extends context_condition {
   function execute($node) {
     foreach ($this->get_contexts() as $context) {
       if (current_path() == 'node/' . $node->nid) {
-        // Initialise variable to display the ad.
-        $show = TRUE;
-
-        // Check if the enable checkbox has been selected in the client term.
-        if (isset($node->field_client[LANGUAGE_NONE][0]['tid'])) {
-          $term = taxonomy_term_load($node->field_client[LANGUAGE_NONE][0]['tid']);
-          if (
-            isset($term->field_enable_branding_on_nodes[LANGUAGE_NONE][0]['value']) &&
-            $term->field_enable_branding_on_nodes[LANGUAGE_NONE][0]['value'] == 0
-          ) {
-            $show = FALSE;
-          }
-          else {
-            // Check if the exclude checkbox has been selected in the node.
-            if (
-              isset($node->field_exclude_client_branding[LANGUAGE_NONE][0]['value']) &&
-              $node->field_exclude_client_branding[LANGUAGE_NONE][0]['value'] == 1
-            ) {
-              $show = FALSE;
-            }
-          }
-        }
-
-        if ($show) {
+        if (dennis_client_show_content_partnership($node)) {
           $this->condition_met($context);
         }
       }

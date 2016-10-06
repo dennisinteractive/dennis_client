@@ -318,16 +318,6 @@ function dennis_client_views_default_views_alter(&$views) {
     $content_partnership_filter['type'] = 'select';
     $content_partnership_filter['vocabulary'] = 'content_partnerships';
   }
-
-  // Exclude sponsored content from news.
-  $views['xmlsitemap_news']->display['default']->display_options['filters']['field_content_partnerships_tid'] = array(
-    'id' => 'field_content_partnerships_tid',
-    'table' => 'field_data_field_content_partnerships',
-    'field' => 'field_content_partnerships_tid',
-    'operator' => 'empty',
-    'type' => 'select',
-    'vocabulary' => 'content_partnerships',
-  );
 }
 
 //@todo write help hook explaining the functionalities of dennis client
@@ -357,6 +347,47 @@ function dennis_client_node_view($node, $view_mode, $langcode) {
 }
 
 /**
+ * Implements hook_views_query_alter().
+ *
+ * Adds the restriction on sponsored checkbox to the query.
+ */
+function dennis_client_views_query_alter(&$view, &$query) {
+  switch ($view->name) {
+    case 'xmlsitemap_news':
+      // Joining sponsored field to the xmlsitemap_view.
+      $join = new views_join();
+      $join->table = 'field_data_field_content_partnerships';
+      $join->left_table = 'node';
+      $join->field = 'entity_id';
+      $join->left_field = 'nid';
+      $join->extra[] = array(
+        'field' => 'field_content_partnerships_tid',
+        'value' => '1'
+      );
+      $join->type = 'LEFT';
+      $join->extra_type = 'OR';
+      $query->table_queue['field_data_field_content_partnerships'] = array(
+        'table' => 'field_data_field_content_partnerships',
+        'alias' => 'field_data_field_content_partnerships',
+        'num' => 1,
+        'relationship' => 'node',
+        'join' => $join,
+      );
+      $query->where[] = array(
+        'conditions' => array(
+          array(
+            'field' => 'field_data_field_content_partnerships.field_content_partnerships_tid',
+            'value' => '',
+            'operator' => 'IS NULL',
+          )
+        ),
+        'type' => 'AND',
+      );
+      break;
+  }
+}
+
+/**
  * Determine whether the node is sponsored or not.
  *
  * @param object $node
@@ -378,6 +409,35 @@ function dennis_client_node_is_sponsored($node) {
   drupal_alter('dennis_client_node_is_sponsored', $sponsored, $node);
 
   return $sponsored;
+}
+
+/**
+ * Helper to check whether we should show the content partnership block/rendered entity.
+ * @param $node
+ */
+function dennis_client_show_content_partnership($node) {
+  $show = true;
+  // Check if the enable checkbox has been selected in the client term.
+  if (isset($node->field_client[LANGUAGE_NONE][0]['tid'])) {
+    $term = taxonomy_term_load($node->field_client[LANGUAGE_NONE][0]['tid']);
+    if (
+      isset($term->field_enable_branding_on_nodes[LANGUAGE_NONE][0]['value']) &&
+      $term->field_enable_branding_on_nodes[LANGUAGE_NONE][0]['value'] == 0
+    ) {
+      $show = FALSE;
+    }
+    else {
+      // Check if the exclude checkbox has been selected in the node.
+      if (
+        isset($node->field_exclude_client_branding[LANGUAGE_NONE][0]['value']) &&
+        $node->field_exclude_client_branding[LANGUAGE_NONE][0]['value'] == 1
+      ) {
+        $show = FALSE;
+      }
+    }
+  }
+
+  return $show;
 }
 
 /**
@@ -452,6 +512,26 @@ function dennis_client_entity_presave($entity, $type) {
   if (isset($entity->field_client)) {
     if (!isset($entity->field_client[LANGUAGE_NONE][0]['tid'])) {
       $entity->field_content_partnerships = array();
+    }
+  }
+}
+
+/**
+ * Implements hook_preprocess_node().
+ */
+function dennis_client_preprocess_node(&$variables) {
+  $variables['view_mode'] = $variables['elements']['#view_mode'];
+  $variables['node'] = $variables['elements']['#node'];
+  $node = $variables['node'];
+  if ($variables['view_mode'] == 'full') {
+    // Hide the rendered field client.
+    if (!dennis_client_show_content_partnership($node)) {
+      if (isset($variables['content']['field_client'])) {
+        if ($variables['content']['field_client']['#field_type'] == 'taxonomy_term_reference') {
+          //@todo check that the view mode = content_partnership, but the information is not available in the array.
+          $variables['content']['field_client']['#access'] = FALSE;
+        }
+      }
     }
   }
 }
@@ -543,8 +623,9 @@ function dennis_client_block_view($delta = '') {
           }
           else {
             $block['subject'] = '';
+            $term = taxonomy_term_view($term, 'content_partnership', $node->language);
             // Render the term and cache the rendered output.
-            $block['content'] = drupal_render(taxonomy_term_view($term, 'content_partnership', $node->language));
+            $block['content'] = drupal_render($term);
 
             if (variable_get('block_cache', FALSE)) {
               cache_set($cid, $block, 'cache_block', CACHE_TEMPORARY);
