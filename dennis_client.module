@@ -592,7 +592,7 @@ function dennis_client_entity_info_alter(&$entity_info) {
   // New node view mode.
   $entity_info['taxonomy_term']['view modes']['content_partnership'] = array(
     'label' => t('Content Partnership'),
-    'custom settings' => TRUE,
+    'custom settings' => FALSE,
   );
 }
 
