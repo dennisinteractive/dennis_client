@@ -113,14 +113,6 @@ function dennis_client_update_7104() {
   foreach ($fields as $field) {
     dennis_client_ensure_field($field, $bundles);
   }
-  //@todo remove lines below and functions if dennis_client_ensure_field() works
-//
-//  module_load_include('inc', 'dennis_client', 'includes/field_content_partnerships');
-//  module_load_include('inc', 'dennis_client', 'includes/field_exclude_client_branding');
-//
-//  // Create fields.
-//  _dennis_client_create_field_content_partnerships();
-//  _dennis_client_create_field_exclude_client_branding();
 }
 
 /**
