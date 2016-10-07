@@ -12,7 +12,8 @@ function dennis_client_install() {
   _dennis_client_create_taxonomy();
 
   // Add the fields to Article, Reviews.
-  $fields = array('field_client');
+  //@todo test this.
+  $fields = array('field_client', 'field_content_partnerships', 'field_exclude_client_branding');
   $bundles = array('article', 'review', 'gallery_adv');
   foreach ($fields as $field) {
     dennis_client_ensure_field($field, $bundles);
@@ -69,6 +70,7 @@ function dennis_client_update_7100() {
  * Use Category hub view to display client taxonomy.
  */
 function dennis_client_update_7101() {
+  //@todo test this on new site install
   taxonomy_display_save_taxonomy_display('clients', array(
     'term_display_plugin' => 'TaxonomyDisplayTermDisplayHandlerCore',
     'term_display_options' => NULL,
@@ -106,12 +108,19 @@ function dennis_client_update_7103() {
  * Create field_content_partnership and field_exclude_client_branding if they don't exist.
  */
 function dennis_client_update_7104() {
-  module_load_include('inc', 'dennis_client', 'includes/field_content_partnerships');
-  module_load_include('inc', 'dennis_client', 'includes/field_exclude_client_branding');
-
-  // Create fields.
-  _dennis_client_create_field_content_partnerships();
-  _dennis_client_create_field_exclude_client_branding();
+  $fields = array('field_content_partnerships', 'field_exclude_client_branding');
+  $bundles = array('article', 'review', 'gallery_adv');
+  foreach ($fields as $field) {
+    dennis_client_ensure_field($field, $bundles);
+  }
+  //@todo remove lines below and functions if dennis_client_ensure_field() works
+//
+//  module_load_include('inc', 'dennis_client', 'includes/field_content_partnerships');
+//  module_load_include('inc', 'dennis_client', 'includes/field_exclude_client_branding');
+//
+//  // Create fields.
+//  _dennis_client_create_field_content_partnerships();
+//  _dennis_client_create_field_exclude_client_branding();
 }
 
 /**
