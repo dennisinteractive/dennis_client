@@ -119,18 +119,8 @@ function dennis_client_update_7104() {
  * Migrate field_sponsored and delete it.
  */
 function dennis_client_update_7105() {
-  // Store all the nids that have field_sponsored checked.
-  $entity_ids = array();
-  $result = db_select('field_data_field_sponsored', 'fdfs')
-    ->fields('fdfs', array('entity_id'))
-    ->condition('field_sponsored_value', 1, '=')
-    ->execute()
-    ->fetchAll();
-  foreach ($result as $key => $value) {
-    $entity_ids[] = $value->entity_id;
-  }
-
-  // Get the tid in the new vocabulary
+  // Get the tid for Sponsored.
+  $tid = NULL;
   $name = 'content_partnerships';
   $vocabulary = taxonomy_vocabulary_machine_name_load($name);
   $tree = taxonomy_get_tree($vocabulary->vid);
@@ -140,13 +130,47 @@ function dennis_client_update_7105() {
     }
   }
 
-  // Migrate the value of the field_sponsored to field_content_partnerships.
-  if (isset($tid)) {
-    foreach ($entity_ids as $nid) {
-      $node = node_load($nid);
-      $node->field_content_partnerships[LANGUAGE_NONE][0]['tid'] = $tid;
-      field_attach_update('node', $node);
-      entity_get_controller('node')->resetCache(array($node->nid));
+  if ($tid) {
+    // Migrate legacy data.
+    $tables = array(
+      'field_data_field_sponsored' => 'field_data_field_content_partnerships',
+      'field_revision_field_sponsored' => 'field_revision_field_content_partnerships',
+    );
+    foreach ($tables as $source_table => $dest_table) {
+      $sql = "INSERT INTO " . $dest_table . " (
+        entity_type,
+        bundle,
+        deleted,
+        entity_id,
+        revision_id,
+        language,
+        delta,
+        field_content_partnerships_tid
+      ) SELECT
+        legacy.entity_type,
+        legacy.bundle,
+        legacy.deleted,
+        legacy.entity_id,
+        legacy.revision_id,
+        legacy.language,
+        legacy.delta,
+        '$tid'
+      FROM " . $source_table . " legacy
+      LEFT JOIN " . $dest_table . " new ON new.entity_id = legacy.entity_id
+      WHERE new.entity_id IS NULL
+      AND legacy.field_sponsored_value != '0';";
+
+      $result = db_query($sql);
+
+      drupal_set_message(
+        t('Copied %rows from %source to %dest.',
+          array(
+            '%rows' => $result->rowCount(),
+            '%source' => $source_table,
+            '%dest' => $dest_table,
+          )
+        )
+      );
     }
   }
 
@@ -165,8 +189,6 @@ function dennis_client_update_7106() {
     taxonomy_term_delete($term->tid);
   }
 }
-//@todo review these update hooks
-//@todo see if we can do a straight query
 //@todo check any remaining code to do with old implementation
 //@todo test this module with sites that use old implementation
 //@todo add bdd tests to cover all requirements
