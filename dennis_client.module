@@ -360,10 +360,6 @@ function dennis_client_views_query_alter(&$view, &$query) {
       $join->left_table = 'node';
       $join->field = 'entity_id';
       $join->left_field = 'nid';
-      $join->extra[] = array(
-        'field' => 'field_content_partnerships_tid',
-        'value' => '1'
-      );
       $join->type = 'LEFT';
       $join->extra_type = 'OR';
       $query->table_queue['field_data_field_content_partnerships'] = array(
@@ -673,4 +669,20 @@ function dennis_client_context_registry() {
     ),
   );
   return $registry;
+}
+
+/**
+ * Implements template_preprocess_html().
+ */
+function dennis_client_preprocess_html(&$variables) {
+  if (arg(0) == 'node' && is_numeric(arg(1))) {
+    $node = menu_get_object();
+    if (dennis_client_show_content_partnership($node)) {
+      if ($term = taxonomy_term_load($node->field_client[LANGUAGE_NONE][0]['tid'])) {
+        $name = strtolower($term->name);
+        $variables['classes_array'][] = 'page-' . drupal_clean_css_identifier($name);
+        $variables['classes_array'][] = 'tid-' . $term->tid;
+      }
+    }
+  }
 }
