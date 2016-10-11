@@ -193,6 +193,7 @@ function dennis_client_field_exclude_client_branding_instance($bundle) {
       0 => array(
         'value' => 0,
       ),
+    ),
     'deleted' => '0',
     'description' => '',
     'display' => array(
