@@ -191,4 +191,3 @@ function dennis_client_update_7106() {
 }
 //@todo check any remaining code to do with old implementation
 //@todo test this module with sites that use old implementation
-//@todo add bdd tests to cover all requirements

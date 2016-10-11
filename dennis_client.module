@@ -247,25 +247,6 @@ function _dennis_client_revert_field($field_name) {
 }
 
 /**
- * Helper function to revert to the field config in dennis_client.field.inc.
- *
- * Only updates if the field instance exists.
- * Use dennis_client_ensure_field() to create it.
- *
- * @param string $field_name
- *   Name of the field instance to revert.
- * @param string $bundle
- *   Name of the bundle the field instance is a part of.
- */
-function _dennis_client_revert_field_instance($field_name, $bundle) {
-  module_load_include('inc', 'dennis_client', 'dennis_client.field');
-  if ($field_config_instance_function = dennis_client_ensure_field_instance_definition($field_name)) {
-    $instance = call_user_func($field_config_instance_function, $bundle);
-    field_update_instance($instance);
-  }
-}
-
-/**
  * Implements hook_views_default_views_alter().
  */
 function dennis_client_views_default_views_alter(&$views) {
