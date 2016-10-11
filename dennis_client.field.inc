@@ -215,7 +215,7 @@ function dennis_client_field_exclude_client_branding_instance($bundle) {
       'active' => 1,
       'module' => 'options',
       'settings' => array(
-        'display_label' => 0,
+        'display_label' => 1,
       ),
       'type' => 'options_onoff',
       'weight' => '4',
