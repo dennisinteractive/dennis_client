@@ -39,7 +39,7 @@ function dennis_client_context_default_contexts() {
         'dennis_client-content_partnerships' => array(
           'module' => 'dennis_client',
           'delta' => 'content_partnerships',
-          'region' => 'content_top',
+          'region' => 'content',
           'weight' => '-10',
         ),
       ),
