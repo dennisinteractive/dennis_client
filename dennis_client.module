@@ -814,3 +814,47 @@ function dennis_client_preprocess_html(&$variables) {
     }
   }
 }
+
+/**
+ * Creates contexts programmatically.
+ */
+function _dennis_client_create_contexts() {
+  $context = new stdClass();
+  $context->disabled = FALSE; /* Edit this to true to make a default context disabled initially */
+  $context->api_version = 3;
+  $context->name = 'content_partnerships';
+  $context->description = 'Show the content partnerships block.';
+  $context->tag = 'Client';
+  $context->conditions = array(
+    'context_condition_content_partnerships' => array(
+      'values' => array(
+        1 => 1,
+      ),
+    ),
+    'node' => array(
+      'values' => array(
+        'article' => 'article',
+        'gallery_adv' => 'gallery_adv',
+        'review' => 'review',
+      ),
+      'options' => array(
+        'node_form' => '0',
+      ),
+    ),
+  );
+  $context->reactions = array(
+    'block' => array(
+      'blocks' => array(
+        'dennis_client-content_partnerships' => array(
+          'module' => 'dennis_client',
+          'delta' => 'content_partnerships',
+          'region' => 'content',
+          'weight' => '-10',
+        ),
+      ),
+    ),
+  );
+  $context->condition_mode = 1;
+
+  context_save($context);
+}
