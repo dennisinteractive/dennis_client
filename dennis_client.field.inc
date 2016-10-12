@@ -76,7 +76,7 @@ function dennis_client_field_client_instance($bundle) {
       'module' => 'options',
       'settings' => array(),
       'type' => 'options_select',
-      'weight' => '2',
+      'weight' => '2.5',
     ),
   );
 }
@@ -148,7 +148,7 @@ function dennis_client_field_content_partnerships_instance($bundle) {
       'module' => 'options',
       'settings' => array(),
       'type' => 'options_select',
-      'weight' => '3',
+      'weight' => '2.7',
     ),
   );
 }
@@ -221,7 +221,7 @@ function dennis_client_field_exclude_client_branding_instance($bundle) {
         'display_label' => 1,
       ),
       'type' => 'options_onoff',
-      'weight' => '4',
+      'weight' => '2.8',
     ),
   );
 }
