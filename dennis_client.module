@@ -164,6 +164,7 @@ function _dennis_client_migrate_field_sponsored() {
     }
   }
 
+  $field_exists = FALSE;
   if ($tid) {
     // Migrate legacy data.
     $tables = array(
@@ -171,6 +172,11 @@ function _dennis_client_migrate_field_sponsored() {
       'field_revision_field_sponsored' => 'field_revision_field_content_partnerships',
     );
     foreach ($tables as $source_table => $dest_table) {
+      if (!db_table_exists($source_table)) {
+        continue;
+      }
+      $field_exists = TRUE;
+
       $sql = "INSERT INTO " . $dest_table . " (
         entity_type,
         bundle,
@@ -210,9 +216,11 @@ function _dennis_client_migrate_field_sponsored() {
     }
   }
 
-  // Delete field_sponsored.
-  field_delete_field('field_sponsored');
-  field_purge_batch(1);
+  if ($field_exists) {
+    // Delete field_sponsored.
+    field_delete_field('field_sponsored');
+    field_purge_batch(1);
+  }
 
   /**
    * Remove sponsored term from article type.
