@@ -176,8 +176,8 @@ function dennis_client_field_exclude_client_branding_config() {
     'module' => 'list',
     'settings' => array(
       'allowed_values' => array(
-        0 => '',
-        1 => '',
+        0 => '0',
+        1 => '1',
       ),
       'allowed_values_function' => '',
     ),
