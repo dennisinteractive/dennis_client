@@ -138,7 +138,7 @@ function dennis_client_field_content_partnerships_instance($bundle) {
     ),
     'entity_type' => 'node',
     'field_name' => 'field_content_partnerships',
-    'label' => 'This content is part of a Content Partnership. How impartial is it?',
+    'label' => 'Content Partnership',
     'required' => 0,
     'settings' => array(
       'user_register_form' => FALSE,
