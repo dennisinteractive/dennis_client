@@ -4,6 +4,9 @@
  * dennis_client.field.inc
  *
  * NB: this is NOT used by features.
+ * These functions get called by dennis_client_get_field_definition() and
+ * dennis_client_get_field_instance_definition(). The returned arrays are copied
+ * from a field export.
  */
 
 /**
