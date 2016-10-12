@@ -16,6 +16,7 @@ dependencies[] = list
 dependencies[] = options
 dependencies[] = strongarm
 dependencies[] = taxonomy
+dependencies[] = taxonomy_display
 dependencies[] = text
 features[ctools][] = context:context:3
 features[ctools][] = field_group:field_group:1
