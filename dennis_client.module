@@ -243,10 +243,7 @@ function _dennis_client_migrate_field_sponsored() {
  * @param array  $content_types
  *   An array of content type names to act on.
  */
-function dennis_client_ensure_field($field_name, $content_types = array(
-  'article',
-  'review'
-)) {
+function dennis_client_ensure_field($field_name, $content_types) {
   module_load_include('inc', 'dennis_client', 'dennis_client.field');
 
   // Ensure the field is created only if it doesn't exist.
@@ -278,6 +275,7 @@ function dennis_client_ensure_field($field_name, $content_types = array(
     }
   }
 
+  node_type_cache_reset();
   $node_types = node_type_get_types();
 
   // The field is needed if there are any entries left in $content_types.
@@ -307,13 +305,9 @@ function dennis_client_ensure_field($field_name, $content_types = array(
 /**
  * Helper to add fields to the specified bundles.
  *
- * @param array $bundles
+ * @param array $bundles List of bundles to add the fields.
  */
-function dennis_client_add_fields_to_bundles($bundles = array(
-  'article',
-  'review',
-  'gallery_adv'
-)) {
+function dennis_client_add_fields_to_bundles($bundles = array('article', 'review', 'gallery_adv')) {
   // Add the fields to Article, Reviews, Advanced gallery.
   $fields = array(
     'field_client',
