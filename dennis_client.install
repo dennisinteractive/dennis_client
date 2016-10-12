@@ -10,14 +10,18 @@
 function dennis_client_install() {
   // Create taxonomy.
   _dennis_client_create_taxonomy();
+  // Configure the taxonomy display.
+  _dennis_client_set_taxonomy_display();
 
-  // Add the fields to Article, Reviews.
-  //@todo test this.
+  // Add the fields to Article, Reviews, Advanced gallery.
   $fields = array('field_client', 'field_content_partnerships', 'field_exclude_client_branding');
   $bundles = array('article', 'review', 'gallery_adv');
   foreach ($fields as $field) {
     dennis_client_ensure_field($field, $bundles);
   }
+
+  // Migrate and delete legacy field.
+  _dennis_client_migrate_field_sponsored();
 }
 
 /**
@@ -70,125 +74,24 @@ function dennis_client_update_7100() {
  * Use Category hub view to display client taxonomy.
  */
 function dennis_client_update_7101() {
-  //@todo test this on new site install
-  taxonomy_display_save_taxonomy_display('clients', array(
-    'term_display_plugin' => 'TaxonomyDisplayTermDisplayHandlerCore',
-    'term_display_options' => NULL,
-    'associated_display_plugin' => 'TaxonomyDisplayAssociatedDisplayHandlerViews',
-    'associated_display_options' => array(
-      'view' => 'category_hub',
-      'display' => 'default',
-    ),
-    'breadcrumb_display_plugin' => 'TaxonomyDisplayBreadcrumbDisplayHandlerCore',
-    'add_feed' => 1,
-  ));
+  _dennis_client_set_taxonomy_display();
 }
 
 /**
- * Create vocabulary (if it doesn't exist) and terms programmatically.
+ * Redo hook_install() steps.
  */
 function dennis_client_update_7102() {
   // Create taxonomy.
   _dennis_client_create_taxonomy();
-}
+  _dennis_client_set_taxonomy_display();
 
-/**
- * Add field_client to Advanced Gallery.
- */
-function dennis_client_update_7103() {
-  // Add field_client to Advanced Gallery.
-  $fields = array('field_client');
-  $bundles = array('gallery_adv');
-  foreach ($fields as $field) {
-    dennis_client_ensure_field($field, $bundles);
-  }
-}
-
-/**
- * Create field_content_partnership and field_exclude_client_branding if they don't exist.
- */
-function dennis_client_update_7104() {
-  $fields = array('field_content_partnerships', 'field_exclude_client_branding');
+  $fields = array('field_client', 'field_content_partnerships', 'field_exclude_client_branding');
   $bundles = array('article', 'review', 'gallery_adv');
   foreach ($fields as $field) {
     dennis_client_ensure_field($field, $bundles);
   }
-}
 
-/**
- * Migrate field_sponsored and delete it.
- */
-function dennis_client_update_7105() {
-  // Get the tid for Sponsored.
-  $tid = NULL;
-  $name = 'content_partnerships';
-  $vocabulary = taxonomy_vocabulary_machine_name_load($name);
-  $tree = taxonomy_get_tree($vocabulary->vid);
-  foreach ($tree as $term) {
-    if ($term->name == 'Sponsored') {
-      $tid = $term->tid;
-    }
-  }
-
-  if ($tid) {
-    // Migrate legacy data.
-    $tables = array(
-      'field_data_field_sponsored' => 'field_data_field_content_partnerships',
-      'field_revision_field_sponsored' => 'field_revision_field_content_partnerships',
-    );
-    foreach ($tables as $source_table => $dest_table) {
-      $sql = "INSERT INTO " . $dest_table . " (
-        entity_type,
-        bundle,
-        deleted,
-        entity_id,
-        revision_id,
-        language,
-        delta,
-        field_content_partnerships_tid
-      ) SELECT
-        legacy.entity_type,
-        legacy.bundle,
-        legacy.deleted,
-        legacy.entity_id,
-        legacy.revision_id,
-        legacy.language,
-        legacy.delta,
-        '$tid'
-      FROM " . $source_table . " legacy
-      LEFT JOIN " . $dest_table . " new ON new.entity_id = legacy.entity_id
-      WHERE new.entity_id IS NULL
-      AND legacy.field_sponsored_value != '0';";
-
-      $result = db_query($sql);
-
-      drupal_set_message(
-        t('Copied %rows from %source to %dest.',
-          array(
-            '%rows' => $result->rowCount(),
-            '%source' => $source_table,
-            '%dest' => $dest_table,
-          )
-        )
-      );
-    }
-  }
-
-  // Delete field_sponsored.
-  field_delete_field('field_sponsored');
-  field_purge_batch(1);
-}
-
-/**
- * Remove sponsored term from article type.
- */
-function dennis_client_update_7106() {
-  $term = taxonomy_get_term_by_name('sponsored', 'article_type');
-  $term = array_shift($term);
-  if (isset($term)) {
-    taxonomy_term_delete($term->tid);
-  }
+  _dennis_client_migrate_field_sponsored();
 }
 //@todo check any remaining code to do with old implementation
 //@todo test this module with sites that use old implementation
-
