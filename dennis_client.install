@@ -13,12 +13,7 @@ function dennis_client_install() {
   // Configure the taxonomy display.
   _dennis_client_set_taxonomy_display();
 
-  // Add the fields to Article, Reviews, Advanced gallery.
-  $fields = array('field_client', 'field_content_partnerships', 'field_exclude_client_branding');
-  $bundles = array('article', 'review', 'gallery_adv');
-  foreach ($fields as $field) {
-    dennis_client_ensure_field($field, $bundles);
-  }
+  dennis_client_add_fields_to_bundles();
 
   // Migrate and delete legacy field.
   _dennis_client_migrate_field_sponsored();
@@ -85,11 +80,7 @@ function dennis_client_update_7102() {
   _dennis_client_create_taxonomy();
   _dennis_client_set_taxonomy_display();
 
-  $fields = array('field_client', 'field_content_partnerships', 'field_exclude_client_branding');
-  $bundles = array('article', 'review', 'gallery_adv');
-  foreach ($fields as $field) {
-    dennis_client_ensure_field($field, $bundles);
-  }
+  dennis_client_add_fields_to_bundles();
 
   _dennis_client_migrate_field_sponsored();
 }

@@ -266,8 +266,14 @@ function dennis_client_ensure_field($field_name, $content_types = array('article
     }
   }
 
+  $node_types = node_type_get_types();
+
   // The field is needed if there are any entries left in $content_types.
   foreach ($content_types as $bundle) {
+    if (!isset($node_types[$bundle])) {
+      // Do not create field instances for node types not available.
+      continue;
+    }
     if ($instance = dennis_client_get_field_instance_definition($field_name, $bundle)) {
       // Check if there is an existing instance of this field on this bundle.
       $prior_instance = field_read_instance($instance['entity_type'], $instance['field_name'], $instance['bundle']);
@@ -276,7 +282,26 @@ function dennis_client_ensure_field($field_name, $content_types = array('article
       }
     }
   }
+}
 
+/**
+ * Helper to add fields to the specified bundles.
+ *
+ * @param array $bundles
+ */
+function dennis_client_add_fields_to_bundles($bundles = array('article', 'review', 'gallery_adv')) {
+  // Add the fields to Article, Reviews, Advanced gallery.
+  $fields = array('field_client', 'field_content_partnerships', 'field_exclude_client_branding');
+  foreach ($fields as $field) {
+    dennis_client_ensure_field($field, $bundles);
+  }
+}
+
+/**
+ * Implements hook_node_type_insert();
+ */
+function dennis_client_node_type_insert($info) {
+  dennis_client_add_fields_to_bundles();
 }
 
 /**
