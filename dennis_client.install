@@ -17,6 +17,9 @@ function dennis_client_install() {
 
   // Migrate and delete legacy field.
   _dennis_client_migrate_field_sponsored();
+
+  // Create contexts.
+  _dennis_client_create_contexts();
 }
 
 /**
@@ -83,4 +86,7 @@ function dennis_client_update_7102() {
   dennis_client_add_fields_to_bundles();
 
   _dennis_client_migrate_field_sponsored();
+
+  // Create contexts.
+  _dennis_client_create_contexts();
 }
