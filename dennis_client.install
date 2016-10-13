@@ -8,12 +8,12 @@
  * Implements hook_install().
  */
 function dennis_client_install() {
-  // Create taxonomy.
-  _dennis_client_create_taxonomy();
   // Configure the taxonomy display.
   _dennis_client_set_taxonomy_display();
 
   dennis_client_add_fields_to_bundles();
+
+  _dennis_client_create_taxonomy();
 
   // Migrate and delete legacy field.
   _dennis_client_migrate_field_sponsored();
@@ -79,11 +79,11 @@ function dennis_client_update_7101() {
  * Redo hook_install() steps.
  */
 function dennis_client_update_7102() {
-  // Create taxonomy.
-  _dennis_client_create_taxonomy();
   _dennis_client_set_taxonomy_display();
 
   dennis_client_add_fields_to_bundles();
+
+  _dennis_client_create_taxonomy();
 
   _dennis_client_migrate_field_sponsored();
 
