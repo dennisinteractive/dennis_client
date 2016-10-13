@@ -558,13 +558,71 @@ function dennis_client_field_default_fields() {
     ),
   );
 
+  // Exported field: 'taxonomy_term-content_partnerships-field_ga_custom_dimension'.
+  $fields['taxonomy_term-content_partnerships-field_ga_custom_dimension'] = array(
+    'field_config' => array(
+      'active' => '1',
+      'cardinality' => '1',
+      'deleted' => '0',
+      'entity_types' => array(),
+      'field_name' => 'field_ga_custom_dimension',
+      'foreign keys' => array(),
+      'indexes' => array(),
+      'locked' => '0',
+      'module' => 'number',
+      'settings' => array(),
+      'translatable' => '0',
+      'type' => 'number_integer',
+    ),
+    'field_instance' => array(
+      'bundle' => 'content_partnerships',
+      'default_value' => NULL,
+      'deleted' => '0',
+      'description' => 'Provides the value to output on Google Analytics Custom Dimensions',
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'module' => 'number',
+          'settings' => array(
+            'decimal_separator' => '.',
+            'prefix_suffix' => TRUE,
+            'scale' => 0,
+            'thousand_separator' => '',
+          ),
+          'type' => 'number_integer',
+          'weight' => 0,
+        ),
+      ),
+      'entity_type' => 'taxonomy_term',
+      'field_name' => 'field_ga_custom_dimension',
+      'label' => 'GA Custom Dimension',
+      'required' => 1,
+      'settings' => array(
+        'max' => '',
+        'min' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'user_register_form' => FALSE,
+      ),
+      'widget' => array(
+        'active' => 0,
+        'module' => 'number',
+        'settings' => array(),
+        'type' => 'number',
+        'weight' => '1',
+      ),
+    ),
+  );
+
   // Translatables
   // Included for use with string extractors like potx.
   t('Client link');
   t('Client logo');
   t('Company name');
   t('Enable branding on nodes');
+  t('GA Custom Dimension');
   t('Intro text');
+  t('Provides the value to output on Google Analytics Custom Dimensions');
   t('Strap line');
 
   return $fields;
