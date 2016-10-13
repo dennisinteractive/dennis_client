@@ -84,5 +84,3 @@ function dennis_client_update_7102() {
 
   _dennis_client_migrate_field_sponsored();
 }
-//@todo check any remaining code to do with old implementation
-//@todo test this module with sites that use old implementation

@@ -7,10 +7,49 @@
 include_once 'dennis_client.features.inc';
 
 /**
+ * Implements hook_menu().
+ */
+function dennis_client_menu() {
+  $items['admin/help/dennis_client/tips'] = array(
+    'title' => 'Tips',
+    'page callback' => 'dennis_client_page_tips',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+ * Page callback for tips.
+ */
+function dennis_client_page_tips() {
+  $breadcrumb = array(
+    l('Home', '/'),
+    l('Administration', 'admin'),
+    l('Help', 'admin/help'),
+    l('Dennis Client', 'admin/help/dennis_client'),
+  );
+  drupal_set_breadcrumb($breadcrumb);
+
+  return '';
+}
+
+/**
  * Implements hook_help().
  */
 function dennis_client_help($path, $arg) {
   switch ($path) {
+    case 'admin/help/dennis_client/tips':
+      $output = '';
+      $output .= '<div id="client"><h3>Client</h3></div>';
+      $output .= '  <span>Content to be provided by Audience Dev</span>';
+      $output .= '<div id="content-partnership"><h3>Content partnership</h3>';
+      $output .= '  <span>Content to be provided by Audience Dev</span>';
+      $output .= '</div>';
+
+      return $output;
+
     case 'admin/help#dennis_client':
 
       $filepath = dirname(__FILE__) . '/README.md';
@@ -481,7 +520,6 @@ function dennis_client_views_default_views_alter(&$views) {
   }
 }
 
-//@todo write help hook explaining the functionalities of dennis client
 //@todo update changelog and make file on 7.x
 
 /**
@@ -718,12 +756,14 @@ function dennis_client_form_alter(&$form, &$form_state, $form_id) {
         'select[name="field_client[und]"]' => array('value' => '_none'),
       ),
     );
+
     // Append tip link using js in order to make the states work.
     // For some reason using #suffix to ad the tip won't work with states.
-    $link = l(t('Tips on which option to choose'), '/admin/help/dennis_client', [
+    $link = l(t('Tips on which option to choose'), '/admin/help/dennis_client/tips', [
       'attributes' => [
         'target' => '_blank',
-      ]
+      ],
+      'fragment' => 'content-partnership',
     ]);
     $link = str_replace('"', '\"', $link);
     $form['#attached']['js'][] = array(
