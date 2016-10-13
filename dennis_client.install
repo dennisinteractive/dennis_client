@@ -11,9 +11,11 @@ function dennis_client_install() {
   // Configure the taxonomy display.
   _dennis_client_set_taxonomy_display();
 
+  // Add fields to article, review, gallery_adv.
   dennis_client_add_fields_to_bundles();
 
-  _dennis_client_create_taxonomy();
+  // Create terms.
+  _dennis_client_create_terms();
 
   // Migrate and delete legacy field.
   _dennis_client_migrate_field_sponsored();
@@ -32,7 +34,7 @@ function dennis_client_dennis_requirements_alter(&$requirements, $phase, $distro
     if (variable_get('dennis_client_sponsored_tid', FALSE)) {
       $requirements['dennis_client_field_sponsor_variable'] = array(
         'title' => $t('Dennis Client'),
-        'value' => $t('Distro 1.35.x'),
+        'value' => $t('Distro 1.36.x'),
         'description' => _dennis_requirements_case_link(25449) .
           $t('The variable :name is still set. This is the old way of implementing sponsored content.',
             array(':name' => 'dennis_client_sponsored_tid')
@@ -48,7 +50,7 @@ function dennis_client_dennis_requirements_alter(&$requirements, $phase, $distro
       if (field_info_instance($entity_type, 'field_sponsored', $bundle_name)) {
         $requirements['dennis_client_field_sponsor_' . $bundle_name] = array(
           'title' => $t('Dennis Client'),
-          'value' => $t('Distro 1.35.x'),
+          'value' => $t('Distro 1.36.x'),
           'description' => _dennis_requirements_case_link(25449) .
             $t('The field_sponsored needs to be replaced with field_content_partnership in content type: :bundle_name.',
               array(':bundle_name' => $bundle_name)
@@ -58,6 +60,50 @@ function dennis_client_dennis_requirements_alter(&$requirements, $phase, $distro
       }
     }
   }
+}
+
+/**
+ * Creates contexts programmatically.
+ */
+function _dennis_client_create_contexts() {
+  $context = new stdClass();
+  $context->disabled = FALSE; /* Edit this to true to make a default context disabled initially */
+  $context->api_version = 3;
+  $context->name = 'content_partnerships';
+  $context->description = 'Show the content partnerships block.';
+  $context->tag = 'Client';
+  $context->conditions = array(
+    'context_condition_content_partnerships' => array(
+      'values' => array(
+        1 => 1,
+      ),
+    ),
+    'node' => array(
+      'values' => array(
+        'article' => 'article',
+        'gallery_adv' => 'gallery_adv',
+        'review' => 'review',
+      ),
+      'options' => array(
+        'node_form' => '0',
+      ),
+    ),
+  );
+  $context->reactions = array(
+    'block' => array(
+      'blocks' => array(
+        'dennis_client-content_partnerships' => array(
+          'module' => 'dennis_client',
+          'delta' => 'content_partnerships',
+          'region' => 'content',
+          'weight' => '-10',
+        ),
+      ),
+    ),
+  );
+  $context->condition_mode = 1;
+
+  context_save($context);
 }
 
 /**
@@ -79,12 +125,16 @@ function dennis_client_update_7101() {
  * Redo hook_install() steps.
  */
 function dennis_client_update_7102() {
+  // Configure the taxonomy display.
   _dennis_client_set_taxonomy_display();
 
+  // Add fields to article, review, gallery_adv.
   dennis_client_add_fields_to_bundles();
 
-  _dennis_client_create_taxonomy();
+  // Create terms.
+  _dennis_client_create_terms();
 
+  // Migrate and delete legacy field.
   _dennis_client_migrate_field_sponsored();
 
   // Create contexts.
