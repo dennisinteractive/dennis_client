@@ -50,4 +50,15 @@ INSTALLATION
 FAQ
 ---
 
-See the <a href="/admin/help/dennis_client/tips">Tips</a> page.
+To attach fields programmatically to a new content type:
+
+// Get existing configuration.
+$bundles = variable_get('dennis_client_bundles');
+// Add new content type.
+$bundles[] = 'content_type';
+// Update configuration.
+variable_set('dennis_client_bundles', $bundles);
+
+When you do this, the hook_node_type_insert() will pick up the configuration and attach the fields automatically.
+
+Also, see the <a href="/admin/help/dennis_client/tips">Tips</a> page.
