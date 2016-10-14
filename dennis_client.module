@@ -379,8 +379,6 @@ function dennis_client_views_default_views_alter(&$views) {
   }
 }
 
-//@todo update changelog and make file on 7.x
-
 /**
  * Implements hook_node_view().
  */
