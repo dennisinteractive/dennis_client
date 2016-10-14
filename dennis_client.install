@@ -125,6 +125,14 @@ function dennis_client_update_7101() {
  * Redo hook_install() steps.
  */
 function dennis_client_update_7102() {
+  // Enable these modules on sites that already have dennis client enabled.
+  module_enable(array(
+      'link',
+      'taxonomy_display',
+      'number'
+    )
+  );
+
   // Configure the taxonomy display.
   _dennis_client_set_taxonomy_display();
 
