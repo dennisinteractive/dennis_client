@@ -48,36 +48,6 @@ function dennis_client_field_client_config() {
 }
 
 /**
- * Definition of field_sponsored.
- */
-function dennis_client_field_sponsored_config() {
-  return array(
-    'active' => '1',
-    'cardinality' => '1',
-    'deleted' => '0',
-    'entity_types' => array(),
-    'field_name' => 'field_sponsored',
-    'foreign keys' => array(),
-    'indexes' => array(
-      'value' => array(
-        0 => 'value',
-      ),
-    ),
-    'locked' => '0',
-    'module' => 'list',
-    'settings' => array(
-      'allowed_values' => array(
-        0 => '0',
-        1 => '1',
-      ),
-      'allowed_values_function' => '',
-    ),
-    'translatable' => '0',
-    'type' => 'list_boolean',
-  );
-}
-
-/**
  * The default to be used for instances of field_client.
  */
 function dennis_client_field_client_instance($bundle) {
@@ -106,15 +76,120 @@ function dennis_client_field_client_instance($bundle) {
       'module' => 'options',
       'settings' => array(),
       'type' => 'options_select',
-      'weight' => '2',
+      'weight' => '2.5',
     ),
   );
 }
 
 /**
- * The default to be used for instances of field_sponsored.
+ * Definition of field_content_partnerships.
  */
-function dennis_client_field_sponsored_instance($bundle) {
+function dennis_client_field_content_partnerships_config() {
+  return array(
+    'active' => '1',
+    'cardinality' => '1',
+    'deleted' => '0',
+    'entity_types' => array(),
+    'field_name' => 'field_content_partnerships',
+    'foreign keys' => array(
+      'tid' => array(
+        'columns' => array(
+          'tid' => 'tid',
+        ),
+        'table' => 'taxonomy_term_data',
+      ),
+    ),
+    'indexes' => array(
+      'tid' => array(
+        0 => 'tid',
+      ),
+    ),
+    'locked' => '1',
+    'module' => 'taxonomy',
+    'settings' => array(
+      'allowed_values' => array(
+        0 => array(
+          'vocabulary' => 'content_partnerships',
+          'parent' => '0',
+        ),
+      ),
+    ),
+    'translatable' => '0',
+    'type' => 'taxonomy_term_reference',
+  );
+}
+
+/**
+ * The default to be used for instances of field_content_partnerships.
+ */
+function dennis_client_field_content_partnerships_instance($bundle) {
+  return array(
+    'bundle' => $bundle,
+    'default_value' => NULL,
+    'deleted' => '0',
+    'description' => 'When content is part of a Content Partnership you need to define how impartial the content is. Think about the level of editorial independence there was when the content was created.',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_content_partnerships',
+    'label' => 'Content Partnership',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'options',
+      'settings' => array(),
+      'type' => 'options_select',
+      'weight' => '2.7',
+    ),
+  );
+}
+
+/**
+ * Definition of field_exclude_client_branding.
+ */
+function dennis_client_field_exclude_client_branding_config() {
+  return array(
+    'active' => '1',
+    'cardinality' => '1',
+    'deleted' => '0',
+    'entity_types' => array(),
+    'field_name' => 'field_exclude_client_branding',
+    'field_permissions' => array(
+      'type' => '0',
+    ),
+    'foreign keys' => array(),
+    'indexes' => array(
+      'value' => array(
+        0 => 'value',
+      ),
+    ),
+    'locked' => '0',
+    'module' => 'list',
+    'settings' => array(
+      'allowed_values' => array(
+        0 => '0',
+        1 => '1',
+      ),
+      'allowed_values_function' => '',
+    ),
+    'translatable' => '0',
+    'type' => 'list_boolean',
+  );
+}
+
+/**
+ * The default to be used for instances of field_exclude_client_branding.
+ */
+function dennis_client_field_exclude_client_branding_instance($bundle) {
   return array(
     'bundle' => $bundle,
     'default_value' => array(
@@ -123,19 +198,18 @@ function dennis_client_field_sponsored_instance($bundle) {
       ),
     ),
     'deleted' => '0',
-    'description' => 'Check this if the node is to be sponsored by the client. This usually means changing the page layout according to the sponsors request.',
+    'description' => '',
     'display' => array(
       'default' => array(
         'label' => 'above',
-        'module' => 'list',
         'settings' => array(),
         'type' => 'hidden',
         'weight' => 0,
       ),
     ),
     'entity_type' => 'node',
-    'field_name' => 'field_sponsored',
-    'label' => 'Sponsored',
+    'field_name' => 'field_exclude_client_branding',
+    'label' => 'Exclude client branding on this node',
     'required' => 0,
     'settings' => array(
       'user_register_form' => FALSE,
@@ -147,7 +221,7 @@ function dennis_client_field_sponsored_instance($bundle) {
         'display_label' => 1,
       ),
       'type' => 'options_onoff',
-      'weight' => '11',
+      'weight' => '2.8',
     ),
   );
 }

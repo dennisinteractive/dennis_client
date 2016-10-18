@@ -5,16 +5,92 @@
  */
 
 include_once 'dennis_client.features.inc';
+include_once 'dennis_client.taxonomy.inc';
+
 /**
- * @file
- * Code for the Dennis Client module.
+ * Implements hook_menu().
  */
+function dennis_client_menu() {
+  $items['admin/help/dennis_client/tips'] = array(
+    'title' => 'Tips',
+    'page callback' => 'dennis_client_page_tips',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+ * Page callback for tips.
+ */
+function dennis_client_page_tips() {
+  $breadcrumb = array(
+    l('Home', '/'),
+    l('Administration', 'admin'),
+    l('Help', 'admin/help'),
+    l('Dennis Client', 'admin/help/dennis_client'),
+  );
+  drupal_set_breadcrumb($breadcrumb);
+
+  return '';
+}
+
+/**
+ * Implements hook_help().
+ */
+function dennis_client_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help/dennis_client/tips':
+      $output = '';
+      $output .= '<div id="client"><h3>Client</h3></div>';
+      $output .= '  <span>Content to be provided by Audience Dev</span>';
+      $output .= '<div id="content-partnership"><h3>Content partnership</h3>';
+      $output .= '  <span>Content to be provided by Audience Dev</span>';
+      $output .= '</div>';
+
+      return $output;
+
+    case 'admin/help#dennis_client':
+
+      $filepath = dirname(__FILE__) . '/README.md';
+      if (file_exists($filepath)) {
+        $readme = file_get_contents($filepath);
+      }
+      else {
+        $filepath = dirname(__FILE__) . '/README.txt';
+        if (file_exists($filepath)) {
+          $readme = file_get_contents($filepath);
+        }
+      }
+      if (!isset($readme)) {
+        return NULL;
+      }
+      if (module_exists('markdown')) {
+        $filters = module_invoke('markdown', 'filter_info');
+        $info = $filters['filter_markdown'];
+
+        if (function_exists($info['process callback'])) {
+          $output = $info['process callback']($readme, NULL);
+        }
+        else {
+          $output = '<pre>' . $readme . '</pre>';
+        }
+      }
+      else {
+        $output = '<pre>' . $readme . '</pre>';
+      }
+
+      return $output;
+  }
+}
 
 /**
  * Implements hook_dfp_global_targeting_alter().
  *
  * Adjust the ad tags if the current node, index page is tagged with a
  * "client" taxonomy term.
+ *
  * @see https://didev.fogbugz.com/default.asp?20972
  * @see https://didev.fogbugz.com/default.asp?23527
  */
@@ -40,7 +116,12 @@ function dennis_client_dfp_global_targeting_alter(&$targeting) {
     }
     else {
       // Load the term.
-      $term = taxonomy_term_load($item->field_client[LANGUAGE_NONE][0]['tid']);
+      if (isset($item->field_client[LANGUAGE_NONE])) {
+        $term = taxonomy_term_load($item->field_client[LANGUAGE_NONE][0]['tid']);
+      }
+      else {
+        $term = FALSE;
+      }
     }
 
     // Sanity check, can't do proper object instance checking in Drupal 7.
@@ -62,7 +143,7 @@ function dennis_client_dfp_global_targeting_alter(&$targeting) {
     // Add the client key value pair on index pages.
     if (strpos($menu_item['path'], 'taxonomy/term/') !== FALSE && !empty($menu_item['page_arguments'][0])) {
       $term = taxonomy_term_load($menu_item['page_arguments'][0]);
-      if ($term->vocabulary_machine_name == 'clients') {
+      if (isset($term->vocabulary_machine_name) && $term->vocabulary_machine_name == 'clients') {
         $client_page = TRUE;
       }
     }
@@ -92,10 +173,10 @@ function dennis_client_dfp_global_targeting_alter(&$targeting) {
  *
  * @param string $field_name
  *   Name of the field you want to ensure exists and has an instance.
- * @param array $content_types
+ * @param array  $content_types
  *   An array of content type names to act on.
  */
-function dennis_client_ensure_field($field_name, $content_types = array('article', 'review')) {
+function dennis_client_ensure_field($field_name, $content_types) {
   module_load_include('inc', 'dennis_client', 'dennis_client.field');
 
   // Ensure the field is created only if it doesn't exist.
@@ -127,17 +208,59 @@ function dennis_client_ensure_field($field_name, $content_types = array('article
     }
   }
 
+  node_type_cache_reset();
+  $node_types = node_type_get_types();
+
   // The field is needed if there are any entries left in $content_types.
   foreach ($content_types as $bundle) {
+    if (!isset($node_types[$bundle])) {
+      // Do not create field instances for node types not available.
+      continue;
+    }
     if ($instance = dennis_client_get_field_instance_definition($field_name, $bundle)) {
       // Check if there is an existing instance of this field on this bundle.
       $prior_instance = field_read_instance($instance['entity_type'], $instance['field_name'], $instance['bundle']);
       if ($prior_instance === FALSE) {
         field_create_instance($instance);
+        drupal_set_message(
+          t('Dennis Client created field %field_name on %bundle.',
+            array(
+              '%field_name' => $field_name,
+              '%bundle' => $bundle,
+            )
+          )
+        );
       }
     }
   }
+}
 
+/**
+ * Helper to add fields to the specified bundles.
+ *
+ * @param array $bundles List of bundles to add the fields.
+ */
+function dennis_client_add_fields_to_bundles() {
+  // In order to add Client fields to new bundles, change the value of this
+  // variable and call this function.
+  $bundles = variable_get('dennis_client_bundles', array('article', 'review', 'gallery_adv'));
+
+  // Add the fields to Article, Reviews, Advanced gallery.
+  $fields = array(
+    'field_client',
+    'field_content_partnerships',
+    'field_exclude_client_branding'
+  );
+  foreach ($fields as $field) {
+    dennis_client_ensure_field($field, $bundles);
+  }
+}
+
+/**
+ * Implements hook_node_type_insert();
+ */
+function dennis_client_node_type_insert($info) {
+  dennis_client_add_fields_to_bundles();
 }
 
 /**
@@ -183,7 +306,6 @@ function dennis_client_get_field_instance_definition($field_name, $bundle) {
   }
 }
 
-
 /**
  * Helper function to revert to the field config in dennis_client.field.inc.
  *
@@ -203,28 +325,13 @@ function _dennis_client_revert_field($field_name) {
 }
 
 /**
- * Helper function to revert to the field config in dennis_client.field.inc.
- *
- * Only updates if the field instance exists.
- * Use dennis_client_ensure_field() to create it.
- *
- * @param string $field_name
- *   Name of the field instance to revert.
- * @param string $bundle
- *   Name of the bundle the field instance is a part of.
- */
-function _dennis_client_revert_field_instance($field_name, $bundle) {
-  module_load_include('inc', 'dennis_client', 'dennis_client.field');
-  if ($field_config_instance_function = dennis_client_ensure_field_instance_definition($field_name)) {
-    $instance = call_user_func($field_config_instance_function, $bundle);
-    field_update_instance($instance);
-  }
-}
-
-/**
  * Implements hook_views_default_views_alter().
  */
 function dennis_client_views_default_views_alter(&$views) {
+  // Overrides default views
+  // NOTE: This hook only works on views that are not overriden
+  // To see which views are overriden, run drush vl
+  // To revert a view, run drush vr [view name].
   if (isset($views['content_administration'])) {
     $client_filter = &$views['content_administration']->display['default']->display_options['filters']['field_client_tid'];
     /* Filter criterion: Content: Client (field_client) */
@@ -247,24 +354,28 @@ function dennis_client_views_default_views_alter(&$views) {
     );
     $client_filter['type'] = 'select';
     $client_filter['vocabulary'] = 'clients';
-  }
 
-  // If the sponsored tid is set, exclude from xml news sitemap.
-  if (isset($views['xmlsitemap_news'])) {
-    if ($sponsored_tid = variable_get('dennis_client_sponsored_tid', FALSE)) {
-      $views['xmlsitemap_news']->display['default']->display_options['filters']['field_article_type_tid_1'] = array(
-        'id' => 'field_article_type_tid_1',
-        'table' => 'field_data_field_article_type',
-        'field' => 'field_article_type_tid',
-        'operator' => 'not',
-        'value' => array(
-          $sponsored_tid => $sponsored_tid,
-        ),
-        'type' => 'select',
-        'vocabulary' => 'article_type',
-        'hierarchy' => 1,
-      );
-    }
+    $content_partnership_filter = &$views['content_administration']->display['default']->display_options['filters']['field_content_partnerships_tid'];
+    /* Filter criterion: Content: Content Partnerships (content_partnerships) */
+    $content_partnership_filter['id'] = 'field_content_partnerships_tid';
+    $content_partnership_filter['table'] = 'field_data_field_content_partnerships';
+    $content_partnership_filter['field'] = 'field_content_partnerships_tid';
+    $content_partnership_filter['value'] = '';
+    $content_partnership_filter['exposed'] = TRUE;
+    $content_partnership_filter['expose']['operator_id'] = 'field_content_partnerships_tid_op';
+    $content_partnership_filter['expose']['label'] = 'Content Partnerships';
+    $content_partnership_filter['expose']['operator'] = 'field_content_partnerships_tid_op';
+    $content_partnership_filter['expose']['identifier'] = 'field_content_partnerships_tid';
+    $content_partnership_filter['expose']['remember_roles'] = array(
+      2 => '2',
+      1 => 0,
+      3 => 0,
+      5 => 0,
+      6 => 0,
+      4 => 0,
+    );
+    $content_partnership_filter['type'] = 'select';
+    $content_partnership_filter['vocabulary'] = 'content_partnerships';
   }
 }
 
@@ -284,6 +395,10 @@ function dennis_client_node_view($node, $view_mode, $langcode) {
       );
       drupal_add_html_head($element, 'googlebot-news');
     }
+    // Fire our context plugin when viewing nodes.
+    if ($plugin = context_get_plugin('condition', 'context_condition_content_partnerships')) {
+      $plugin->execute($node);
+    }
   }
 }
 
@@ -297,16 +412,15 @@ function dennis_client_views_query_alter(&$view, &$query) {
     case 'xmlsitemap_news':
       // Joining sponsored field to the xmlsitemap_view.
       $join = new views_join();
-      $join->table = 'field_data_field_sponsored';
+      $join->table = 'field_data_field_content_partnerships';
       $join->left_table = 'node';
       $join->field = 'entity_id';
       $join->left_field = 'nid';
-      $join->extra[] = array('field' => 'field_sponsored_value', 'value' => '1');
       $join->type = 'LEFT';
       $join->extra_type = 'OR';
-      $query->table_queue['field_data_field_sponsored'] = array(
-        'table' => 'field_data_field_sponsored',
-        'alias' => 'field_data_field_sponsored',
+      $query->table_queue['field_data_field_content_partnerships'] = array(
+        'table' => 'field_data_field_content_partnerships',
+        'alias' => 'field_data_field_content_partnerships',
         'num' => 1,
         'relationship' => 'node',
         'join' => $join,
@@ -314,7 +428,7 @@ function dennis_client_views_query_alter(&$view, &$query) {
       $query->where[] = array(
         'conditions' => array(
           array(
-            'field' => 'field_data_field_sponsored.field_sponsored_value',
+            'field' => 'field_data_field_content_partnerships.field_content_partnerships_tid',
             'value' => '',
             'operator' => 'IS NULL',
           )
@@ -332,28 +446,51 @@ function dennis_client_views_query_alter(&$view, &$query) {
  *   The node object.
  */
 function dennis_client_node_is_sponsored($node) {
-  // If a site uses the "article_type" taxonomy to mark articles as sponsored
-  // (the old deprecated way), it should set a variable with the tid of the
-  // "sponsored" term or implement dennis_client_node_is_sponsored_alter().
-  $sponsored_tid = variable_get('dennis_client_sponsored_tid', FALSE);
-
   $sponsored = FALSE;
 
-  // If sponsored checkbox is ticked.
-  if (!empty($node->field_sponsored[LANGUAGE_NONE][0]['value'])) {
-    $sponsored = TRUE;
-  }
-
-  // If article type "sponsored" is selected.
-  if (!$sponsored && $sponsored_tid && !empty($node->field_article_type[LANGUAGE_NONE][0]['tid'])
-    && $node->field_article_type[LANGUAGE_NONE][0]['tid'] == $sponsored_tid) {
-    $sponsored = TRUE;
+  // If sponsored is selected in field_content_partnerships.
+  if (!empty($node->field_client)) {
+    if (!empty($node->field_content_partnerships)) {
+      if (taxonomy_term_load($node->field_content_partnerships[LANGUAGE_NONE][0]['tid'])) {
+        $sponsored = TRUE;
+      }
+    }
   }
 
   // Give site modules a chance to decide if the node is really sponsored.
   drupal_alter('dennis_client_node_is_sponsored', $sponsored, $node);
 
   return $sponsored;
+}
+
+/**
+ * Helper to check whether we should show the content partnership block/rendered entity.
+ *
+ * @param $node
+ */
+function dennis_client_show_content_partnership($node) {
+  $show = TRUE;
+  // Check if the enable checkbox has been selected in the client term.
+  if (isset($node->field_client[LANGUAGE_NONE][0]['tid'])) {
+    $term = taxonomy_term_load($node->field_client[LANGUAGE_NONE][0]['tid']);
+    if (
+      isset($term->field_enable_branding_on_nodes[LANGUAGE_NONE][0]['value']) &&
+      $term->field_enable_branding_on_nodes[LANGUAGE_NONE][0]['value'] == 0
+    ) {
+      $show = FALSE;
+    }
+    else {
+      // Check if the exclude checkbox has been selected in the node.
+      if (
+        isset($node->field_exclude_client_branding[LANGUAGE_NONE][0]['value']) &&
+        $node->field_exclude_client_branding[LANGUAGE_NONE][0]['value'] == 1
+      ) {
+        $show = FALSE;
+      }
+    }
+  }
+
+  return $show;
 }
 
 /**
@@ -376,5 +513,257 @@ function dennis_client_module_implements_alter(&$implementations, $hook) {
     }
     // Setting implementations.
     $implementations = $updated_implementations;
+  }
+}
+
+/**
+ * Implements hook_taxonomy_term_view().
+ *
+ * @param $term
+ * @param $view_mode
+ * @param $langcode
+ */
+function dennis_client_taxonomy_term_view($term, $view_mode, $langcode) {
+  // If the user is anonymous and the vocabulary is content_partnerships, then return 404.
+  if ($term->vocabulary_machine_name == 'content_partnerships' && $view_mode == 'full' && user_is_anonymous()) {
+    drupal_not_found();
+  }
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ *
+ * @param $variables
+ */
+function dennis_client_preprocess_taxonomy_term(&$variables) {
+  if ($variables['view_mode'] == 'content_partnership') {
+    $term = $variables['term'];
+
+    // Wrap content with link.
+    if (isset($term->field_client_link[LANGUAGE_NONE][0])) {
+      $content = render($variables['content']);
+      $url = $term->field_client_link[LANGUAGE_NONE][0]['url'];
+      $options = array(
+        'html' => TRUE,
+        'absolute' => TRUE,
+        'attributes' => array(
+          'target' => '_blank',
+          'rel' => 'nofollow',
+        ),
+      );
+      $content = l($content, $url, $options);
+      $variables['content'] = array('link' => array('#markup' => $content));
+    }
+  }
+}
+
+/**
+ * Implements hook_entity_presave().
+ */
+function dennis_client_entity_presave($entity, $type) {
+  // When field client is empty, clean up field content partnerships too to
+  // prevent the node from showing on news feeds.
+  if (isset($entity->field_client)) {
+    if (!isset($entity->field_client[LANGUAGE_NONE][0]['tid'])) {
+      $entity->field_content_partnerships = array();
+    }
+  }
+}
+
+/**
+ * Implements hook_preprocess_node().
+ */
+function dennis_client_preprocess_node(&$variables) {
+  $variables['view_mode'] = $variables['elements']['#view_mode'];
+  $variables['node'] = $variables['elements']['#node'];
+  $node = $variables['node'];
+  if ($variables['view_mode'] == 'full') {
+    // Hide the rendered field client.
+    if (!dennis_client_show_content_partnership($node)) {
+      if (isset($variables['content']['field_client'])) {
+        if ($variables['content']['field_client']['#field_type'] == 'taxonomy_term_reference') {
+          //@todo check that the view mode = content_partnership, but the information is not available in the array.
+          $variables['content']['field_client']['#access'] = FALSE;
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ *
+ * @param $form
+ * @param $form_state
+ * @param $form_id
+ */
+function dennis_client_form_alter(&$form, &$form_state, $form_id) {
+  // Show/hide content partnerships field depending on the value of client.
+  if (isset($form['field_client'])
+    && isset($form['field_content_partnerships'])
+  ) {
+    $form['#after_build'][] = '_dennis_client_form_after_build';
+    $form['field_content_partnerships']['#states'] = array(
+      'invisible' => array(
+        'select[name="field_client[und]"]' => array('value' => '_none'),
+      ),
+    );
+    $form['field_exclude_client_branding']['#states'] = array(
+      'invisible' => array(
+        'select[name="field_client[und]"]' => array('value' => '_none'),
+      ),
+    );
+
+    // Append tip link using js in order to make the states work.
+    // For some reason using #suffix to ad the tip won't work with states.
+    $link = l(t('Tips on which option to choose'), '/admin/help/dennis_client/tips', [
+      'attributes' => [
+        'target' => '_blank',
+      ],
+      'fragment' => 'content-partnership',
+    ]);
+    $link = str_replace('"', '\"', $link);
+    $form['#attached']['js'][] = array(
+      'data' => '
+      jQuery(document).ready(function () {
+        jQuery("' . $link . '").insertBefore(".form-item-field-content-partnerships-und .description");
+      });',
+      'type' => 'inline',
+    );
+  }
+}
+
+/**
+ * After build function for field_content_partnerships.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function _dennis_client_form_after_build($form, &$form_state) {
+  // Change the label of _none.
+  $form['field_content_partnerships'][LANGUAGE_NONE]['#options']['_none'] = t('Impartial');
+
+  return $form;
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function dennis_client_block_info() {
+  $blocks['content_partnerships'] = array(
+    'info' => t('Content partnerships'),
+    'cache' => DRUPAL_CACHE_CUSTOM,
+  );
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_entity_info_alter()
+ */
+function dennis_client_entity_info_alter(&$entity_info) {
+  // New node view mode.
+  $entity_info['taxonomy_term']['view modes']['content_partnership'] = array(
+    'label' => t('Content Partnership'),
+    'custom settings' => FALSE,
+  );
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function dennis_client_block_view($delta = '') {
+  $block = array();
+  switch ($delta) {
+    case 'content_partnerships':
+      $node = menu_get_object();
+      if (isset($node->nid) && is_numeric($node->nid)) {
+        $wrapper = entity_metadata_wrapper('node', $node);
+
+        if ($term = $wrapper->field_client->value()) {
+          // Create cid using all arguments.
+          $cid_parts = array(
+            'block:dennis_client_partnerships',
+            $term->tid,
+          );
+
+          // Cache per role.
+          $cid_parts = array_merge($cid_parts, drupal_render_cid_parts(DRUPAL_CACHE_PER_ROLE));
+          $cid = implode(':', $cid_parts);
+
+          if ($cached_block = cache_get($cid, 'cache_block')) {
+            $block = $cached_block->data;
+          }
+          else {
+            $block['subject'] = '';
+            $term = taxonomy_term_view($term, 'content_partnership', $node->language);
+            // Render the term and cache the rendered output.
+            $block['content'] = drupal_render($term);
+
+            if (variable_get('block_cache', FALSE)) {
+              cache_set($cid, $block, 'cache_block', CACHE_TEMPORARY);
+            }
+          }
+        }
+      }
+
+      break;
+  }
+
+  return $block;
+}
+
+/**
+ * Implements hook_context_plugins().
+ *
+ */
+function dennis_client_context_plugins() {
+  $plugins = array(
+    'context_condition_content_partnerships' => array(
+      'handler' => array(
+        'path' => drupal_get_path('module', 'dennis_client') . '/plugins/context',
+        'file' => 'context_condition_content_partnerships.inc',
+        'class' => 'context_condition_content_partnerships',
+        'parent' => 'context_condition',
+      ),
+    ),
+  );
+
+  return $plugins;
+}
+
+/**
+ * Implements hook_context_registry().
+ *
+ */
+function dennis_client_context_registry() {
+  $registry = array(
+    'conditions' => array(
+      'context_condition_content_partnerships' => array(
+        'title' => t('Content partnerships'),
+        'description' => t('Set this context when field Content Partnerships is checked'),
+        'plugin' => 'context_condition_content_partnerships',
+      ),
+    ),
+  );
+
+  return $registry;
+}
+
+/**
+ * Implements template_preprocess_html().
+ */
+function dennis_client_preprocess_html(&$variables) {
+  if (arg(0) == 'node' && is_numeric(arg(1))) {
+    $node = menu_get_object();
+    if (dennis_client_show_content_partnership($node)) {
+      if (isset($node->field_client[LANGUAGE_NONE][0]['tid'])) {
+        if ($term = taxonomy_term_load($node->field_client[LANGUAGE_NONE][0]['tid'])) {
+          $name = strtolower($term->name);
+          $variables['classes_array'][] = 'page-' . drupal_clean_css_identifier($name);
+          $variables['classes_array'][] = 'tid-' . $term->tid;
+        }
+      }
+    }
   }
 }
