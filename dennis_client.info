@@ -15,7 +15,6 @@ dependencies[] = link
 dependencies[] = list
 dependencies[] = number
 dependencies[] = options
-dependencies[] = pcpro_taxonomy
 dependencies[] = strongarm
 dependencies[] = taxonomy
 dependencies[] = taxonomy_display
