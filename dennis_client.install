@@ -95,7 +95,39 @@ function _dennis_client_create_contexts() {
         'dennis_client-content_partnerships' => array(
           'module' => 'dennis_client',
           'delta' => 'content_partnerships',
-          'region' => 'content',
+          'region' => 'content_top',
+          'weight' => '-10',
+        ),
+      ),
+    ),
+  );
+  $context->condition_mode = 1;
+
+  context_save($context);
+
+  $context = new stdClass();
+  $context->disabled = FALSE; /* Edit this to true to make a default context disabled initially */
+  $context->api_version = 3;
+  $context->name = 'content_partnerships_client_term';
+  $context->description = 'Show the content partnerships block on the client page.';
+  $context->tag = 'Client';
+  $context->conditions = array(
+    'taxonomy_term' => array(
+      'values' => array(
+        'clients' => 'clients',
+      ),
+      'options' => array(
+        'term_form' => '0',
+      ),
+    ),
+  );
+  $context->reactions = array(
+    'block' => array(
+      'blocks' => array(
+        'dennis_client-content_partnerships_client_term' => array(
+          'module' => 'dennis_client',
+          'delta' => 'content_partnerships_client_term',
+          'region' => 'content_top',
           'weight' => '-10',
         ),
       ),
