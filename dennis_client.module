@@ -655,6 +655,11 @@ function dennis_client_block_info() {
     'cache' => DRUPAL_CACHE_CUSTOM,
   );
 
+  $blocks['content_partnerships_client_term'] = array(
+    'info' => t('Content partnerships client term'),
+    'cache' => DRUPAL_CACHE_CUSTOM,
+  );
+
   return $blocks;
 }
 
@@ -681,35 +686,61 @@ function dennis_client_block_view($delta = '') {
         $wrapper = entity_metadata_wrapper('node', $node);
 
         if ($term = $wrapper->field_client->value()) {
-          // Create cid using all arguments.
-          $cid_parts = array(
-            'block:dennis_client_partnerships',
-            $term->tid,
-          );
+          $block = dennis_client_get_content_partnership_block_contents($term);
+        }
+      }
 
-          // Cache per role.
-          $cid_parts = array_merge($cid_parts, drupal_render_cid_parts(DRUPAL_CACHE_PER_ROLE));
-          $cid = implode(':', $cid_parts);
+      break;
 
-          if ($cached_block = cache_get($cid, 'cache_block')) {
-            $block = $cached_block->data;
-          }
-          else {
-            $block['subject'] = '';
-            $term = taxonomy_term_view($term, 'content_partnership', $node->language);
-            // Render the term and cache the rendered output.
-            $block['content'] = drupal_render($term);
-
-            if (variable_get('block_cache', FALSE)) {
-              cache_set($cid, $block, 'cache_block', CACHE_TEMPORARY);
-            }
-          }
+    case 'content_partnerships_client_term':
+      if (arg(0) == 'taxonomy' && arg(1) == 'term' && arg(2)) {
+        $term = taxonomy_term_load(arg(2));
+        if ($term) {
+          $block = dennis_client_get_content_partnership_block_contents($term);
         }
       }
 
       break;
   }
 
+  return $block;
+}
+
+/**
+ * Retrieve the content partnerships block.
+ *
+ * @param object $term
+ *   The taxonomy term object.
+ *
+ * @return array
+ *   Block contents.
+ */
+function dennis_client_get_content_partnership_block_contents($term) {
+  $block = array();
+
+  // Create cid using all arguments.
+  $cid_parts = array(
+    'block:dennis_client_partnerships',
+    $term->tid,
+  );
+
+  // Cache per role.
+  $cid_parts = array_merge($cid_parts, drupal_render_cid_parts(DRUPAL_CACHE_PER_ROLE));
+  $cid = implode(':', $cid_parts);
+
+  if ($cached_block = cache_get($cid, 'cache_block')) {
+    $block = $cached_block->data;
+  }
+  else {
+    $block['subject'] = '';
+    $term = taxonomy_term_view($term, 'content_partnership');
+    // Render the term and cache the rendered output.
+    $block['content'] = drupal_render($term);
+
+    if (variable_get('block_cache', FALSE)) {
+      cache_set($cid, $block, 'cache_block', CACHE_TEMPORARY);
+    }
+  }
   return $block;
 }
 
