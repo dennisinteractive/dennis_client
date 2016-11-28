@@ -552,7 +552,7 @@ function dennis_client_preprocess_taxonomy_term(&$variables) {
         ),
       );
       // Adding query being chopped off in v1.3 of Link module.
-      if (($term->field_client_link[LANGUAGE_NONE][0]['query']) != NULL) {
+      if (isset($term->field_client_link[LANGUAGE_NONE][0]['query']) && ($term->field_client_link[LANGUAGE_NONE][0]['query']) != NULL) {
         $query = $term->field_client_link[LANGUAGE_NONE][0]['query'];
         $options = $options + array('query' => $query);
       }
