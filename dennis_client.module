@@ -550,6 +550,7 @@ function dennis_client_preprocess_taxonomy_term(&$variables) {
           'target' => '_blank',
           'rel' => 'nofollow',
         ),
+        'query' => $term->field_client_link[LANGUAGE_NONE][0]['query'],
       );
       $content = l($content, $url, $options);
       $variables['content'] = array('link' => array('#markup' => $content));
