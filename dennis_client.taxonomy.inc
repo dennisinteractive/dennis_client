@@ -51,11 +51,11 @@ function _dennis_client_set_taxonomy_display() {
 }
 
 /**
- * Helper to migrate and delete field sponsored.
+ * Helper to migrate  field sponsored.
  */
 function _dennis_client_migrate_field_sponsored() {
   /**
-   * Migrate field_sponsored and delete it.
+   * Migrate field_sponsored.
    */
   // Get the tid for Sponsored.
   $tid = NULL;
@@ -67,8 +67,7 @@ function _dennis_client_migrate_field_sponsored() {
       $tid = $term->tid;
     }
   }
-
-  $field_exists = FALSE;
+  
   if ($tid) {
     // Migrate legacy data.
     $tables = array(
@@ -79,7 +78,6 @@ function _dennis_client_migrate_field_sponsored() {
       if (!db_table_exists($source_table)) {
         continue;
       }
-      $field_exists = TRUE;
 
       $sql = "INSERT INTO " . $dest_table . " (
         entity_type,
@@ -118,12 +116,6 @@ function _dennis_client_migrate_field_sponsored() {
         );
       }
     }
-  }
-
-  if ($field_exists) {
-    // Delete field_sponsored.
-    //field_delete_field('field_sponsored');
-    //field_purge_batch(1);
   }
 
   /**
