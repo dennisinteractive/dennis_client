@@ -55,73 +55,96 @@ function _dennis_client_set_taxonomy_display() {
  */
 function _dennis_client_migrate_field_sponsored() {
   /**
-   * Migrate field_sponsored and delete it.
+   * Migrate from existing sponsored fields.
+   * - field_sponsored and delete field
+   * - sponsored article_type and delete term.
    */
+  $tables = array();
+
   // Get the tid for Sponsored.
-  $tid = NULL;
+  $partnerships_tid = NULL;
   $name = 'content_partnerships';
   $vocabulary = taxonomy_vocabulary_machine_name_load($name);
   $tree = taxonomy_get_tree($vocabulary->vid);
   foreach ($tree as $term) {
     if ($term->name == 'Sponsored') {
-      $tid = $term->tid;
+      $partnerships_tid = $term->tid;
+      // Migrate legacy data.
+      $tables['field_sponsored'] = array(
+        'condition' => "legacy.field_sponsored_value != '0'",
+      );
     }
   }
 
-  $field_exists = FALSE;
-  if ($tid) {
-    // Migrate legacy data.
-    $tables = array(
-      'field_data_field_sponsored' => 'field_data_field_content_partnerships',
-      'field_revision_field_sponsored' => 'field_revision_field_content_partnerships',
+  // Get the tid of the sponsored article type term.
+  $article_type_term = taxonomy_get_term_by_name('sponsored', 'article_type');
+  $article_type_term = array_shift($article_type_term);
+  if (isset($article_type_term)) {
+    // Migrate from "Sponsored" article type if it exists.
+    $article_type_tid = $article_type_term->tid;
+    $tables['field_article_type'] = array(
+      'condition' => "legacy.field_article_type_tid = $article_type_tid",
     );
-    foreach ($tables as $source_table => $dest_table) {
-      if (!db_table_exists($source_table)) {
-        continue;
-      }
-      $field_exists = TRUE;
+  }
 
-      $sql = "INSERT INTO " . $dest_table . " (
-        entity_type,
-        bundle,
-        deleted,
-        entity_id,
-        revision_id,
-        language,
-        delta,
-        field_content_partnerships_tid
-      ) SELECT
-        legacy.entity_type,
-        legacy.bundle,
-        legacy.deleted,
-        legacy.entity_id,
-        legacy.revision_id,
-        legacy.language,
-        legacy.delta,
-        '$tid'
-      FROM " . $source_table . " legacy
-      LEFT JOIN " . $dest_table . " new ON new.entity_id = legacy.entity_id
-      WHERE new.entity_id IS NULL
-      AND legacy.field_sponsored_value != '0';";
+  if (isset($partnerships_tid) && !empty($tables)) {
+    foreach ($tables as $source_field => $dest_config) {
 
-      $result = db_query($sql);
+      foreach (array('data', 'revision') as $type) {
+        $dest_table = "field_" . $type . "_field_content_partnerships";
+        $source_table = "field_" . $type . "_" . $source_field;
 
-      if ($result->rowCount() > 0) {
-        drupal_set_message(
-          t('Copied %rows from %source to %dest.',
-            array(
-              '%rows' => $result->rowCount(),
-              '%source' => $source_table,
-              '%dest' => $dest_table,
+        // Skip if source table doesn't exist.
+        if (!db_table_exists($source_table)) {
+          continue;
+        }
+
+        $sql = "INSERT INTO " . $dest_table . " (
+          entity_type,
+          bundle,
+          deleted,
+          entity_id,
+          revision_id,
+          language,
+          delta,
+          field_content_partnerships_tid
+        ) SELECT
+          legacy.entity_type,
+          legacy.bundle,
+          legacy.deleted,
+          legacy.entity_id,
+          legacy.revision_id,
+          legacy.language,
+          legacy.delta,
+          '$partnerships_tid'
+        FROM " . $source_table . " legacy
+        LEFT JOIN field_" . $type . "_field_content_partnerships new ON new.entity_id = legacy.entity_id
+        WHERE new.entity_id IS NULL";
+
+        // Add any destination specific conditions.
+        if (!empty($dest_config['condition'])) {
+          $sql .= ' AND ' . $dest_config['condition'];
+        }
+
+        $result = db_query($sql);
+
+        if ($result->rowCount() > 0) {
+          drupal_set_message(
+            t('Copied %rows from %source to %dest.',
+              array(
+                '%rows' => $result->rowCount(),
+                '%source' => $source_table,
+                '%dest' => $dest_table,
+              )
             )
-          )
-        );
+          );
+        }
       }
     }
   }
 
-  if ($field_exists) {
-    // Delete field_sponsored.
+  // Delete field_sponsored if it exists.
+  if (field_info_field('field_sponsored')) {
     field_delete_field('field_sponsored');
     field_purge_batch(1);
   }
@@ -129,9 +152,7 @@ function _dennis_client_migrate_field_sponsored() {
   /**
    * Remove sponsored term from article type.
    */
-  $term = taxonomy_get_term_by_name('sponsored', 'article_type');
-  $term = array_shift($term);
-  if (isset($term)) {
-    taxonomy_term_delete($term->tid);
+  if (isset($article_type_tid)) {
+    taxonomy_term_delete($article_type_tid);
   }
 }
