@@ -32,6 +32,7 @@ function dennis_client_dennis_requirements_alter(&$requirements, $phase, $distro
     $t = get_t();
 
     if (variable_get('dennis_client_sponsored_tid', FALSE)) {
+      // Add an error if the variable is set.
       $requirements['dennis_client_field_sponsor_variable'] = array(
         'title' => $t('Dennis Client'),
         'value' => $t('Distro 1.36.x'),
@@ -41,6 +42,20 @@ function dennis_client_dennis_requirements_alter(&$requirements, $phase, $distro
           ),
         'severity' => REQUIREMENT_ERROR,
       );
+      // Report any article type terms named 'Sponsored'.
+      $sponsored_terms = taxonomy_get_term_by_name('sponsored', 'article_type');
+      $sponsored_term = array_shift($sponsored_terms);
+      if (!empty($sponsored_term)) {
+        $requirements['dennis_client_field_sponsor_term'] = array(
+          'title' => $t('Dennis Client'),
+          'value' => $t('Distro 1.36.x'),
+          'description' => _dennis_requirements_case_link(25449) .
+            $t('An article type term named ":name" exists. This is the old way of implementing sponsored content.',
+              array(':name' => $sponsored_term->name)
+            ),
+          'severity' => REQUIREMENT_ERROR,
+        );
+      }
     }
 
     $entity_type = 'node';

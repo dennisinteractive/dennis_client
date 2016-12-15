@@ -77,14 +77,37 @@ function _dennis_client_migrate_field_sponsored() {
   }
 
   // Get the tid of the sponsored article type term.
-  $article_type_term = taxonomy_get_term_by_name('sponsored', 'article_type');
-  $article_type_term = array_shift($article_type_term);
-  if (isset($article_type_term)) {
-    // Migrate from "Sponsored" article type if it exists.
-    $article_type_tid = $article_type_term->tid;
-    $tables['field_article_type'] = array(
-      'condition' => "legacy.field_article_type_tid = $article_type_tid",
+  if ($sponsored_var_tid = variable_get('dennis_client_sponsored_tid')) {
+    $sponsored_term = taxonomy_term_load($sponsored_var_tid);
+    drupal_set_message(t('Found sponsored term %name (tid:%tid) using dennis_client_sponsored_tid variable.', array(
+      '%name' => $sponsored_term->name,
+      '%tid' => $sponsored_term->tid,
+    )));
+  }
+  // Get the term by name if the variable isn't available.
+  if (empty($sponsored_term)) {
+    $sponsored_terms = taxonomy_get_term_by_name('sponsored', 'article_type');
+    $sponsored_term = array_shift($sponsored_terms);
+    if (!empty($sponsored_term)) {
+      drupal_set_message(t('Found sponsored term %name (tid:%tid) by name.', array(
+        '%name' => $sponsored_term->name,
+        '%tid' => $sponsored_term->tid,
+      )));
+    }
+  }
+  // Add to tables to migrate from.
+  if (!empty($sponsored_term)) {
+    $sponsored_term_tid = $sponsored_term->tid;
+    $sponsored_field_names = array(
+      'article_type' => 'field_article_type',
+      'category' => 'field_category_primary',
     );
+    if (isset($sponsored_field_names[$sponsored_term->vocabulary_machine_name])) {
+      $sponsored_field_name = $sponsored_field_names[$sponsored_term->vocabulary_machine_name];
+      $tables[$sponsored_field_name] = array(
+        'condition' => "legacy." . $sponsored_field_name . "_tid = " . $sponsored_term_tid,
+      );
+    }
   }
 
   if (isset($partnerships_tid) && !empty($tables)) {
@@ -141,18 +164,34 @@ function _dennis_client_migrate_field_sponsored() {
         }
       }
     }
+
+    // Update taxonomy index table.
+    $term_index_sql = "INSERT INTO taxonomy_index (
+        nid,
+        tid,
+        sticky,
+        created
+      ) SELECT
+        n.nid,
+        cp.field_content_partnerships_tid,
+        0,
+        UNIX_TIMESTAMP(NOW())
+      FROM field_data_field_content_partnerships cp
+      LEFT JOIN node n ON n.nid = cp.entity_id AND cp.entity_type = 'node'
+      WHERE n.status = 1";
+
+    $term_index_result = db_query($term_index_sql);
+
+    if ($term_index_result->rowCount() > 0) {
+      drupal_set_message(t('Inserted %rows rows into taxonomy_index table.', array(
+        '%rows' => $term_index_result->rowCount(),
+      )));
+    }
   }
 
   // Delete field_sponsored if it exists.
   if (field_info_field('field_sponsored')) {
     field_delete_field('field_sponsored');
     field_purge_batch(1);
-  }
-
-  /**
-   * Remove sponsored term from article type.
-   */
-  if (isset($article_type_tid)) {
-    taxonomy_term_delete($article_type_tid);
   }
 }
