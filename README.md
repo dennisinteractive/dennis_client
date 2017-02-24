@@ -50,8 +50,13 @@ INSTALLATION
 FAQ
 ---
 
-To attach fields programmatically to a new content type:
+- How to attach Sponsored content fields to existing content types:
+// Set all content types that will have the fields attached.
+variable_set('dennis_client_bundles', ['article', 'review', 'gallery_adv']);
+// Call this function
+dennis_client_add_fields_to_bundles();
 
+- How to attach fields programmatically to a new content type:
 // Get existing configuration.
 $bundles = variable_get('dennis_client_bundles');
 // Add new content type.
