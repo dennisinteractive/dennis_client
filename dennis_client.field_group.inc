@@ -23,12 +23,12 @@ function dennis_client_field_group_info() {
     'label' => 'Content partnerships',
     'weight' => '8',
     'children' => array(
-      0 => 'field_client_link',
+      0 => 'field_intro_text',
       1 => 'field_company_name',
-      2 => 'field_enable_branding_on_nodes',
-      3 => 'field_intro_text',
+      2 => 'field_client_logo',
+      3 => 'field_client_link',
       4 => 'field_strap_line',
-      5 => 'field_client_logo',
+      5 => 'field_enable_branding_on_nodes',
     ),
     'format_type' => 'fieldset',
     'format_settings' => array(

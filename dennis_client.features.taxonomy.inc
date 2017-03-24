@@ -13,19 +13,17 @@ function dennis_client_taxonomy_default_vocabularies() {
       'name' => 'Clients',
       'machine_name' => 'clients',
       'description' => 'Names of advertising clients',
-      'hierarchy' => '1',
+      'hierarchy' => 1,
       'module' => 'taxonomy',
-      'weight' => '0',
-      'rdf_mapping' => array(),
+      'weight' => 0,
     ),
     'content_partnerships' => array(
       'name' => 'Content Partnerships',
       'machine_name' => 'content_partnerships',
       'description' => '',
-      'hierarchy' => '0',
+      'hierarchy' => 0,
       'module' => 'taxonomy',
-      'weight' => '0',
-      'rdf_mapping' => array(),
+      'weight' => 0,
     ),
   );
 }
