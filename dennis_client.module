@@ -383,7 +383,7 @@ function dennis_client_views_default_views_alter(&$views) {
  * Implements hook_node_view().
  */
 function dennis_client_node_view($node, $view_mode, $langcode) {
-  if ($view_mode == 'full') {
+  if (node_is_page($node)) {
     // Adding meta tag for googlebot-news.
     if (dennis_client_node_is_sponsored($node)) {
       $element = array(
