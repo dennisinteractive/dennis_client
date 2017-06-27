@@ -192,6 +192,5 @@ function _dennis_client_migrate_field_sponsored() {
   // Delete field_sponsored if it exists.
   if (field_info_field('field_sponsored')) {
     field_delete_field('field_sponsored');
-    field_purge_batch(1);
   }
 }
