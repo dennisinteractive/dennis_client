@@ -791,7 +791,7 @@ function dennis_client_context_registry() {
     'conditions' => array(
       'context_condition_content_partnerships' => array(
         'title' => t('Content partnerships'),
-        'description' => t('Set this context when field Content Partnerships is checked'),
+        'description' => t('Checks if the client branding is included'),
         'plugin' => 'context_condition_content_partnerships',
       ),
       'context_condition_is_sponsored' => array(
