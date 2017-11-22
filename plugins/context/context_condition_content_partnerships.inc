@@ -18,7 +18,7 @@ class context_condition_content_partnerships extends context_condition {
   function execute($node) {
     foreach ($this->get_contexts() as $context) {
       if (current_path() == 'node/' . $node->nid) {
-        if (dennis_client_node_is_sponsored($node)) {
+        if (dennis_client_show_content_partnership($node)) {
           $this->condition_met($context);
         }
       }
