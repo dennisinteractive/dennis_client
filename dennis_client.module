@@ -746,7 +746,6 @@ function dennis_client_block_view($delta = '') {
  *   Block contents.
  */
 function dennis_client_get_content_partnership_block_contents($term, $view_mode = 'content_partnership') {
-
   $block = array();
 
   // Create cid using all arguments.
