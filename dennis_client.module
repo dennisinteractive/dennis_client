@@ -665,6 +665,11 @@ function dennis_client_block_info() {
     'cache' => DRUPAL_CACHE_CUSTOM,
   );
 
+  $blocks['content_partnerships_client_info'] = array(
+    'info' => t('Content partnerships client info'),
+    'cache' => DRUPAL_CACHE_CUSTOM,
+  );
+
   return $blocks;
 }
 
@@ -672,9 +677,14 @@ function dennis_client_block_info() {
  * Implements hook_entity_info_alter()
  */
 function dennis_client_entity_info_alter(&$entity_info) {
-  // New node view mode.
+  // New taxonomy term view mode.
   $entity_info['taxonomy_term']['view modes']['content_partnership'] = array(
     'label' => t('Content Partnership'),
+    'custom settings' => FALSE,
+  );
+  // Required taxonomy term view mode for branded taxonomy pages.
+  $entity_info['taxonomy_term']['view modes']['term_client_branding'] = array(
+    'label' => t('Term client branding'),
     'custom settings' => FALSE,
   );
 }
@@ -706,6 +716,18 @@ function dennis_client_block_view($delta = '') {
       }
 
       break;
+
+    case 'content_partnerships_client_info':
+      if (arg(0) == 'taxonomy' && arg(1) == 'term' && arg(2)) {
+        $wrapper = entity_metadata_wrapper('taxonomy_term', taxonomy_term_load(arg(2)));
+        // Load referenced client term object.
+        $term = $wrapper->field_client->value();
+        if (is_object($term) && $wrapper->field_include_client_branding->value()) {
+          $block = dennis_client_get_content_partnership_block_contents($term, 'term_client_branding');
+        }
+      }
+
+      break;
   }
 
   return $block;
@@ -717,10 +739,14 @@ function dennis_client_block_view($delta = '') {
  * @param object $term
  *   The taxonomy term object.
  *
+ * @param string $view_mode
+ *   The required view mode to render block.
+ *
  * @return array
  *   Block contents.
  */
-function dennis_client_get_content_partnership_block_contents($term) {
+function dennis_client_get_content_partnership_block_contents($term, $view_mode = 'content_partnership') {
+
   $block = array();
 
   // Create cid using all arguments.
@@ -738,7 +764,7 @@ function dennis_client_get_content_partnership_block_contents($term) {
   }
   else {
     $block['subject'] = '';
-    $term = taxonomy_term_view($term, 'content_partnership');
+    $term = taxonomy_term_view($term, $view_mode);
     // Render the term and cache the rendered output.
     $block['content'] = drupal_render($term);
 
