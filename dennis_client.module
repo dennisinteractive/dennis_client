@@ -855,11 +855,11 @@ function dennis_client_context_registry() {
  * Implements template_preprocess_html().
  */
 function dennis_client_preprocess_html(&$variables) {
-  if (arg(0) == 'node' && is_numeric(arg(1))) {
-    $node = menu_get_object();
-    if (dennis_client_show_content_partnership($node)) {
-      if (isset($node->field_client[LANGUAGE_NONE][0]['tid'])) {
-        if ($term = taxonomy_term_load($node->field_client[LANGUAGE_NONE][0]['tid'])) {
+  if ($menu_entity = dennis_client_menu_get_object()) {
+    $entity = $menu_entity['entity'];
+    if (dennis_client_show_content_partnership($menu_entity['entity'], $menu_entity['type'])) {
+      if (isset($entity->field_client[LANGUAGE_NONE][0]['tid'])) {
+        if ($term = taxonomy_term_load($entity->field_client[LANGUAGE_NONE][0]['tid'])) {
           $name = strtolower($term->name);
           $variables['classes_array'][] = 'page-' . drupal_clean_css_identifier($name);
           $variables['classes_array'][] = 'tid-' . $term->tid;
