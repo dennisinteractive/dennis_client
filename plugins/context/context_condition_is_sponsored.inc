@@ -10,15 +10,15 @@ class context_condition_is_sponsored extends context_condition {
 
   function editor_form($context = NULL) {
     $form = parent::editor_form($context);
-    $form[1]['#title'] = t('Node is sponsored');
+    $form[1]['#title'] = t('Entity is sponsored');
     $form['#weight'] = -10;
     return $form;
   }
 
-  function execute($node) {
+  function execute($entity, $type) {
     foreach ($this->get_contexts() as $context) {
-      if (current_path() == 'node/' . $node->nid) {
-        if (dennis_client_node_is_sponsored($node)) {
+      if (dennis_client_entity_is_page($entity, $type)) {
+        if (dennis_client_entity_is_sponsored($entity, $type)) {
           $this->condition_met($context);
         }
       }
