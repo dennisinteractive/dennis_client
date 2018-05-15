@@ -209,7 +209,7 @@ function dennis_client_field_exclude_client_branding_instance($bundle, $entity_t
     ),
     'entity_type' => $entity_type,
     'field_name' => 'field_exclude_client_branding',
-    'label' => 'Exclude client branding on this ' . $entity_type,
+    'label' => 'Exclude client branding on this ' . str_replace('_', ' ', $entity_type),
     'required' => 0,
     'settings' => array(
       'user_register_form' => FALSE,
