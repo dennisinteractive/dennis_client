@@ -391,7 +391,7 @@ function dennis_client_views_default_views_alter(&$views) {
 }
 
 /**
- * Implements hook_node_view().
+ * Implements hook_entity_view().
  */
 function dennis_client_entity_view($entity, $type, $view_mode, $langcode) {
   if (dennis_client_entity_is_page($entity, $type)) {
@@ -414,6 +414,15 @@ function dennis_client_entity_view($entity, $type, $view_mode, $langcode) {
       // Fire our context plugin when viewing nodes.
       if ($plugin = context_get_plugin('condition', $condition)) {
         $plugin->execute($entity, $type);
+      }
+    }
+
+    if (!dennis_client_show_content_partnership($entity, $type)) {
+      if (isset($entity->content['field_client'])) {
+        if ($entity->content['field_client']['#field_type'] == 'taxonomy_term_reference') {
+          //@todo check that the view mode = content_partnership, but the information is not available in the array.
+          $entity->content['field_client']['#access'] = FALSE;
+        }
       }
     }
   }
@@ -516,6 +525,15 @@ function dennis_client_show_content_partnership($entity, $type) {
     ) {
       $show = FALSE;
     }
+    else {
+      // Check if the exclude checkbox has been selected in the node.
+      if (
+        isset($entity->field_exclude_client_branding[LANGUAGE_NONE][0]['value']) &&
+        $entity->field_exclude_client_branding[LANGUAGE_NONE][0]['value'] == 1
+      ) {
+        $show = FALSE;
+      }
+    }
   }
 
   return $show;
@@ -599,26 +617,6 @@ function dennis_client_entity_presave($entity, $type) {
   if (isset($entity->field_client)) {
     if (!isset($entity->field_client[LANGUAGE_NONE][0]['tid'])) {
       $entity->field_content_partnerships = array();
-    }
-  }
-}
-
-/**
- * Implements hook_preprocess_node().
- */
-function dennis_client_preprocess_node(&$variables) {
-  $variables['view_mode'] = $variables['elements']['#view_mode'];
-  $variables['node'] = $variables['elements']['#node'];
-  $node = $variables['node'];
-  if ($variables['view_mode'] == 'full') {
-    // Hide the rendered field client.
-    if (!dennis_client_show_content_partnership($node)) {
-      if (isset($variables['content']['field_client'])) {
-        if ($variables['content']['field_client']['#field_type'] == 'taxonomy_term_reference') {
-          //@todo check that the view mode = content_partnership, but the information is not available in the array.
-          $variables['content']['field_client']['#access'] = FALSE;
-        }
-      }
     }
   }
 }
