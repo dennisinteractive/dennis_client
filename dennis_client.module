@@ -199,7 +199,6 @@ function dennis_client_ensure_field($field_name, $entity_type_bundles) {
       // Remove from $content_types any that already has the field.
       foreach ($field_entity_type_bundles as $entity_type => $bundle) {
         $index = array_search($bundle, $entity_type_bundles[$entity_type]);
-        echo $index . PHP_EOL;
         if ($index !== FALSE) {
           unset($entity_type_bundles[$entity_type][$index]);
         }
