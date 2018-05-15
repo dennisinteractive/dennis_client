@@ -50,7 +50,7 @@ function dennis_client_field_client_config() {
 /**
  * The default to be used for instances of field_client.
  */
-function dennis_client_field_client_instance($bundle) {
+function dennis_client_field_client_instance($bundle, $entity_type) {
   return array(
     'bundle' => $bundle,
     'default_value' => NULL,
@@ -64,7 +64,7 @@ function dennis_client_field_client_instance($bundle) {
         'weight' => 0,
       ),
     ),
-    'entity_type' => 'node',
+    'entity_type' => $entity_type,
     'field_name' => 'field_client',
     'label' => 'Client',
     'required' => 0,
@@ -122,7 +122,7 @@ function dennis_client_field_content_partnerships_config() {
 /**
  * The default to be used for instances of field_content_partnerships.
  */
-function dennis_client_field_content_partnerships_instance($bundle) {
+function dennis_client_field_content_partnerships_instance($bundle, $entity_type) {
   return array(
     'bundle' => $bundle,
     'default_value' => NULL,
@@ -136,7 +136,7 @@ function dennis_client_field_content_partnerships_instance($bundle) {
         'weight' => 0,
       ),
     ),
-    'entity_type' => 'node',
+    'entity_type' => $entity_type,
     'field_name' => 'field_content_partnerships',
     'label' => 'Content Partnership',
     'required' => 0,
@@ -189,7 +189,7 @@ function dennis_client_field_exclude_client_branding_config() {
 /**
  * The default to be used for instances of field_exclude_client_branding.
  */
-function dennis_client_field_exclude_client_branding_instance($bundle) {
+function dennis_client_field_exclude_client_branding_instance($bundle, $entity_type) {
   return array(
     'bundle' => $bundle,
     'default_value' => array(
@@ -207,9 +207,9 @@ function dennis_client_field_exclude_client_branding_instance($bundle) {
         'weight' => 0,
       ),
     ),
-    'entity_type' => 'node',
+    'entity_type' => $entity_type,
     'field_name' => 'field_exclude_client_branding',
-    'label' => 'Exclude client branding on this node',
+    'label' => 'Exclude client branding on this ' . $entity_type,
     'required' => 0,
     'settings' => array(
       'user_register_form' => FALSE,
