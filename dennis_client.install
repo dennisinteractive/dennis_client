@@ -195,3 +195,10 @@ function dennis_client_update_7102() {
   // Create contexts.
   _dennis_client_create_contexts();
 }
+
+/**
+ * Add client fields to taxonomy terms.
+ */
+function dennis_client_update_7103() {
+  dennis_client_add_fields_to_bundles();
+}

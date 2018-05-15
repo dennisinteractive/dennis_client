@@ -34,6 +34,12 @@ function dennis_client_strongarm() {
       'token' => array(
         'custom_settings' => FALSE,
       ),
+      'term_client_branding' => array(
+        'custom_settings' => TRUE,
+      ),
+      'entity' => array(
+        'custom_settings' => FALSE,
+      ),
     ),
     'extra_fields' => array(
       'form' => array(),
@@ -104,6 +110,13 @@ function dennis_client_strongarm() {
             'weight' => '10',
             'visible' => FALSE,
           ),
+          'term_client_branding' => array(
+            'settings' => array(
+              'smart_paging_settings_context' => 'content_type',
+            ),
+            'weight' => '7',
+            'visible' => FALSE,
+          ),
         ),
         'description' => array(
           'teaser' => array(
@@ -124,6 +137,10 @@ function dennis_client_strongarm() {
           ),
           'sidebar_teaser' => array(
             'weight' => '0',
+            'visible' => FALSE,
+          ),
+          'term_client_branding' => array(
+            'weight' => '5',
             'visible' => FALSE,
           ),
         ),

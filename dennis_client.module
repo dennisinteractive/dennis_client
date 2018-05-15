@@ -173,10 +173,10 @@ function dennis_client_dfp_global_targeting_alter(&$targeting) {
  *
  * @param string $field_name
  *   Name of the field you want to ensure exists and has an instance.
- * @param array  $content_types
- *   An array of content type names to act on.
+ * @param array  $entity_type_bundles
+ *   An array of entity types and bundles to act on.
  */
-function dennis_client_ensure_field($field_name, $content_types) {
+function dennis_client_ensure_field($field_name, $entity_type_bundles) {
   module_load_include('inc', 'dennis_client', 'dennis_client.field');
 
   // Ensure the field is created only if it doesn't exist.
@@ -190,46 +190,48 @@ function dennis_client_ensure_field($field_name, $content_types) {
   // See if the field is part of the required bundles.
   $info = field_info_field_map();
   if (isset($info[$field_name])) {
-    foreach ($info[$field_name] as $bundles) {
-      // Only interested in nodes.
-      if (!isset($bundles['node'])) {
-        // Not a node so check the next bundle.
+    foreach ($info[$field_name] as $field_entity_type_bundles) {
+      // Skip fields that don't have a bundle.
+      if (empty($bundles)) {
         continue;
       }
 
       // Remove from $content_types any that already has the field.
-      foreach ($bundles['node'] as $node) {
-        $index = array_search($node, $content_types);
+      foreach ($field_entity_type_bundles as $entity_type => $bundle) {
+        $index = array_search($bundle, $entity_type_bundles[$entity_type]);
         if ($index !== FALSE) {
-          unset($content_types[$index]);
+          unset($entity_type_bundles[$entity_type][$index]);
         }
       }
 
     }
   }
 
-  node_type_cache_reset();
-  $node_types = node_type_get_types();
+  entity_info_cache_clear();
 
   // The field is needed if there are any entries left in $content_types.
-  foreach ($content_types as $bundle) {
-    if (!isset($node_types[$bundle])) {
-      // Do not create field instances for node types not available.
-      continue;
-    }
-    if ($instance = dennis_client_get_field_instance_definition($field_name, $bundle)) {
-      // Check if there is an existing instance of this field on this bundle.
-      $prior_instance = field_read_instance($instance['entity_type'], $instance['field_name'], $instance['bundle']);
-      if ($prior_instance === FALSE) {
-        field_create_instance($instance);
-        drupal_set_message(
-          t('Dennis Client created field %field_name on %bundle.',
-            array(
-              '%field_name' => $field_name,
-              '%bundle' => $bundle,
+  foreach ($entity_type_bundles as $entity_type => $bundles) {
+    $entity_info = entity_get_info($entity_type);
+    foreach ($bundles as $bundle) {
+      if (!isset($entity_info['bundles'][$bundle])) {
+        // Do not create field instances for node types not available.
+        continue;
+      }
+      if ($instance = dennis_client_get_field_instance_definition($field_name, $bundle, $entity_type)) {
+        // Check if there is an existing instance of this field on this bundle.
+        $prior_instance = field_read_instance($instance['entity_type'], $instance['field_name'], $instance['bundle']);
+        if ($prior_instance === FALSE) {
+          field_create_instance($instance);
+          drupal_set_message(
+            t('Dennis Client created field %field_name on %bundle %entity_type.',
+              array(
+                '%field_name' => $field_name,
+                '%bundle' => $bundle,
+                '%entity_type' => $entity_type,
+              )
             )
-          )
-        );
+          );
+        }
       }
     }
   }
@@ -243,7 +245,10 @@ function dennis_client_ensure_field($field_name, $content_types) {
 function dennis_client_add_fields_to_bundles() {
   // In order to add Client fields to new bundles, change the value of this
   // variable and call this function.
-  $bundles = variable_get('dennis_client_bundles', array('article', 'review', 'gallery_adv'));
+  $entity_type_bundles = variable_get('dennis_client_entity_type_bundles', array(
+    'node' => array('article', 'review', 'gallery_adv'),
+    'taxonomy_term' => array('category', 'tags', 'article_type'),
+  ));
 
   // Add the fields to Article, Reviews, Advanced gallery.
   $fields = array(
@@ -252,7 +257,7 @@ function dennis_client_add_fields_to_bundles() {
     'field_exclude_client_branding'
   );
   foreach ($fields as $field) {
-    dennis_client_ensure_field($field, $bundles);
+    dennis_client_ensure_field($field, $entity_type_bundles);
   }
 }
 
@@ -292,14 +297,20 @@ function dennis_client_get_field_definition($field_name) {
  * @param string $field_name
  *   Name of the field to check is defined.
  *
+ * @param string $bundle
+ *   The bundle that the instance is for.
+ *
+ * @param string $entity_type
+ *   The entity type that the bundle belongs to.
+ *
  * @return array
  *   Field instance config definition.
  */
-function dennis_client_get_field_instance_definition($field_name, $bundle) {
+function dennis_client_get_field_instance_definition($field_name, $bundle, $entity_type) {
   module_load_include('inc', 'dennis_client', 'dennis_client.field');
   $field_config_function = 'dennis_client_' . $field_name . '_instance';
   if (function_exists($field_config_function)) {
-    return call_user_func($field_config_function, $bundle);
+    return call_user_func($field_config_function, $bundle, $entity_type);
   }
   else {
     watchdog('dennis_client', 'Field instance definition for %field does not exist.', array('%field' => $field_name));
@@ -380,12 +391,12 @@ function dennis_client_views_default_views_alter(&$views) {
 }
 
 /**
- * Implements hook_node_view().
+ * Implements hook_entity_view().
  */
-function dennis_client_node_view($node, $view_mode, $langcode) {
-  if (node_is_page($node)) {
+function dennis_client_entity_view($entity, $type, $view_mode, $langcode) {
+  if (dennis_client_entity_is_page($entity, $type)) {
     // Adding meta tag for googlebot-news.
-    if (dennis_client_node_is_sponsored($node)) {
+    if (dennis_client_entity_is_sponsored($entity, $type)) {
       $element = array(
         '#tag' => 'meta',
         '#attributes' => array(
@@ -396,13 +407,22 @@ function dennis_client_node_view($node, $view_mode, $langcode) {
       drupal_add_html_head($element, 'googlebot-news');
     }
     $conditions = array(
-      context_get_plugin('condition', 'context_condition_content_partnerships'),
-      context_get_plugin('condition', 'context_condition_is_sponsored')
+      'context_condition_content_partnerships',
+      'context_condition_is_sponsored'
     );
-    foreach ($conditions as $plugin) {
+    foreach ($conditions as $condition) {
       // Fire our context plugin when viewing nodes.
-      if ($plugin) {
-        $plugin->execute($node);
+      if ($plugin = context_get_plugin('condition', $condition)) {
+        $plugin->execute($entity, $type);
+      }
+    }
+
+    if (!dennis_client_show_content_partnership($entity, $type)) {
+      if (isset($entity->content['field_client'])) {
+        if ($entity->content['field_client']['#field_type'] == 'taxonomy_term_reference') {
+          //@todo check that the view mode = content_partnership, but the information is not available in the array.
+          $entity->content['field_client']['#access'] = FALSE;
+        }
       }
     }
   }
@@ -448,23 +468,41 @@ function dennis_client_views_query_alter(&$view, &$query) {
 /**
  * Determine whether the node is sponsored or not.
  *
+ * @deprecated Use dennis_client_entity_is_sponsored() instead.
+ *
  * @param object $node
  *   The node object.
+ *
+ * @return bool
  */
 function dennis_client_node_is_sponsored($node) {
+  return dennis_client_entity_is_sponsored($node, 'node');
+}
+
+/**
+ * Determine whether the entity is sponsored or not.
+ *
+ * @param object $entity
+ *   The node object.
+ * @param $type
+ *   The entity type.
+ *
+ * @return bool
+ */
+function dennis_client_entity_is_sponsored($entity, $type) {
   $sponsored = FALSE;
 
   // If sponsored is selected in field_content_partnerships.
-  if (!empty($node->field_client)) {
-    if (!empty($node->field_content_partnerships)) {
-      if (taxonomy_term_load($node->field_content_partnerships[LANGUAGE_NONE][0]['tid'])) {
+  if (!empty($entity->field_client)) {
+    if (!empty($entity->field_content_partnerships)) {
+      if (taxonomy_term_load($entity->field_content_partnerships[LANGUAGE_NONE][0]['tid'])) {
         $sponsored = TRUE;
       }
     }
   }
 
   // Give site modules a chance to decide if the node is really sponsored.
-  drupal_alter('dennis_client_node_is_sponsored', $sponsored, $node);
+  drupal_alter('dennis_client_entity_is_sponsored', $sponsored, $entity, $type);
 
   return $sponsored;
 }
@@ -472,13 +510,15 @@ function dennis_client_node_is_sponsored($node) {
 /**
  * Helper to check whether we should show the content partnership block/rendered entity.
  *
- * @param $node
+ * @param $entity
+ * @param $type
+ * @return bool
  */
-function dennis_client_show_content_partnership($node) {
+function dennis_client_show_content_partnership($entity, $type) {
   $show = TRUE;
   // Check if the enable checkbox has been selected in the client term.
-  if (isset($node->field_client[LANGUAGE_NONE][0]['tid'])) {
-    $term = taxonomy_term_load($node->field_client[LANGUAGE_NONE][0]['tid']);
+  if (isset($entity->field_client[LANGUAGE_NONE][0]['tid'])) {
+    $term = taxonomy_term_load($entity->field_client[LANGUAGE_NONE][0]['tid']);
     if (
       isset($term->field_enable_branding_on_nodes[LANGUAGE_NONE][0]['value']) &&
       $term->field_enable_branding_on_nodes[LANGUAGE_NONE][0]['value'] == 0
@@ -488,8 +528,8 @@ function dennis_client_show_content_partnership($node) {
     else {
       // Check if the exclude checkbox has been selected in the node.
       if (
-        isset($node->field_exclude_client_branding[LANGUAGE_NONE][0]['value']) &&
-        $node->field_exclude_client_branding[LANGUAGE_NONE][0]['value'] == 1
+        isset($entity->field_exclude_client_branding[LANGUAGE_NONE][0]['value']) &&
+        $entity->field_exclude_client_branding[LANGUAGE_NONE][0]['value'] == 1
       ) {
         $show = FALSE;
       }
@@ -582,26 +622,6 @@ function dennis_client_entity_presave($entity, $type) {
 }
 
 /**
- * Implements hook_preprocess_node().
- */
-function dennis_client_preprocess_node(&$variables) {
-  $variables['view_mode'] = $variables['elements']['#view_mode'];
-  $variables['node'] = $variables['elements']['#node'];
-  $node = $variables['node'];
-  if ($variables['view_mode'] == 'full') {
-    // Hide the rendered field client.
-    if (!dennis_client_show_content_partnership($node)) {
-      if (isset($variables['content']['field_client'])) {
-        if ($variables['content']['field_client']['#field_type'] == 'taxonomy_term_reference') {
-          //@todo check that the view mode = content_partnership, but the information is not available in the array.
-          $variables['content']['field_client']['#access'] = FALSE;
-        }
-      }
-    }
-  }
-}
-
-/**
  * Implements hook_form_alter().
  *
  * @param $form
@@ -671,6 +691,11 @@ function dennis_client_block_info() {
     'cache' => DRUPAL_CACHE_CUSTOM,
   );
 
+  $blocks['content_partnerships_client_info'] = array(
+    'info' => t('Content partnerships client info'),
+    'cache' => DRUPAL_CACHE_CUSTOM,
+  );
+
   return $blocks;
 }
 
@@ -678,9 +703,14 @@ function dennis_client_block_info() {
  * Implements hook_entity_info_alter()
  */
 function dennis_client_entity_info_alter(&$entity_info) {
-  // New node view mode.
+  // New taxonomy term view mode.
   $entity_info['taxonomy_term']['view modes']['content_partnership'] = array(
     'label' => t('Content Partnership'),
+    'custom settings' => FALSE,
+  );
+  // Required taxonomy term view mode for branded taxonomy pages.
+  $entity_info['taxonomy_term']['view modes']['term_client_branding'] = array(
+    'label' => t('Term client branding'),
     'custom settings' => FALSE,
   );
 }
@@ -692,9 +722,8 @@ function dennis_client_block_view($delta = '') {
   $block = array();
   switch ($delta) {
     case 'content_partnerships':
-      $node = menu_get_object();
-      if (isset($node->nid) && is_numeric($node->nid)) {
-        $wrapper = entity_metadata_wrapper('node', $node);
+      if ($menu_entity = dennis_client_menu_get_object()) {
+        $wrapper = entity_metadata_wrapper($menu_entity['type'], $menu_entity['entity']);
 
         if ($term = $wrapper->field_client->value()) {
           $block = dennis_client_get_content_partnership_block_contents($term);
@@ -712,6 +741,18 @@ function dennis_client_block_view($delta = '') {
       }
 
       break;
+
+    case 'content_partnerships_client_info':
+      if (arg(0) == 'taxonomy' && arg(1) == 'term' && arg(2)) {
+        $wrapper = entity_metadata_wrapper('taxonomy_term', taxonomy_term_load(arg(2)));
+        // Load referenced client term object.
+        $term = $wrapper->field_client->value();
+        if (is_object($term) && $wrapper->field_include_client_branding->value()) {
+          $block = dennis_client_get_content_partnership_block_contents($term, 'term_client_branding');
+        }
+      }
+
+      break;
   }
 
   return $block;
@@ -723,10 +764,13 @@ function dennis_client_block_view($delta = '') {
  * @param object $term
  *   The taxonomy term object.
  *
+ * @param string $view_mode
+ *   The required view mode to render block.
+ *
  * @return array
  *   Block contents.
  */
-function dennis_client_get_content_partnership_block_contents($term) {
+function dennis_client_get_content_partnership_block_contents($term, $view_mode = 'content_partnership') {
   $block = array();
 
   // Create cid using all arguments.
@@ -744,7 +788,7 @@ function dennis_client_get_content_partnership_block_contents($term) {
   }
   else {
     $block['subject'] = '';
-    $term = taxonomy_term_view($term, 'content_partnership');
+    $term = taxonomy_term_view($term, $view_mode);
     // Render the term and cache the rendered output.
     $block['content'] = drupal_render($term);
 
@@ -809,16 +853,59 @@ function dennis_client_context_registry() {
  * Implements template_preprocess_html().
  */
 function dennis_client_preprocess_html(&$variables) {
-  if (arg(0) == 'node' && is_numeric(arg(1))) {
-    $node = menu_get_object();
-    if (dennis_client_show_content_partnership($node)) {
-      if (isset($node->field_client[LANGUAGE_NONE][0]['tid'])) {
-        if ($term = taxonomy_term_load($node->field_client[LANGUAGE_NONE][0]['tid'])) {
+  if ($menu_entity = dennis_client_menu_get_object()) {
+    $entity = $menu_entity['entity'];
+    if (dennis_client_show_content_partnership($menu_entity['entity'], $menu_entity['type'])) {
+      if (isset($entity->field_client[LANGUAGE_NONE][0]['tid'])) {
+        if ($term = taxonomy_term_load($entity->field_client[LANGUAGE_NONE][0]['tid'])) {
           $name = strtolower($term->name);
           $variables['classes_array'][] = 'page-' . drupal_clean_css_identifier($name);
           $variables['classes_array'][] = 'tid-' . $term->tid;
         }
       }
+    }
+  }
+}
+
+/**
+ * Check if the provided entity is the page object.
+ *
+ * @param $entity
+ * @param $type
+ * @return bool
+ */
+function dennis_client_entity_is_page($entity, $type) {
+  if ($menu_entity = dennis_client_menu_get_object()) {
+    $menu_entity_wrapper = entity_metadata_wrapper($menu_entity['type'], $menu_entity['entity']);
+    $entity_wrapper = entity_metadata_wrapper($type, $entity);
+    return $menu_entity_wrapper->getIdentifier() == $entity_wrapper->getIdentifier();
+  }
+}
+
+/**
+ * Get the menu entity object.
+ *
+ * @return array|null
+ *   The entity and it's type, e.g.
+ *     array(
+ *       'type' => 'node',
+ *       'entity' => $node,
+ *     )
+ */
+function dennis_client_menu_get_object() {
+  $node = menu_get_object();
+  if (!empty($node->nid)) {
+    return array(
+      'type' => 'node',
+      'entity' => $node,
+    );
+  }
+  if (arg(0) == 'taxonomy' && arg(1) == 'term' && arg(2)) {
+    if ($term = taxonomy_term_load(arg(2))) {
+      return array(
+        'type' => 'taxonomy_term',
+        'entity' => $term,
+      );
     }
   }
 }
