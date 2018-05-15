@@ -197,8 +197,20 @@ function dennis_client_update_7102() {
 }
 
 /**
- * Add client fields to taxonomy terms.
+ * Content partnerships on terms.
  */
 function dennis_client_update_7103() {
+  // Convert old dennis_client_bundles (node only) to dennis_client_entity_type_bundles.
+  // If dennis_client_entity_type_bundles has already been set by a site, it won't be overwritten here.
+  if (!variable_get('dennis_client_entity_type_bundles')) {
+    if ($node_bundles = variable_get('dennis_client_bundles')) {
+      variable_set('dennis_client_entity_type_bundles', array(
+        'node' => $node_bundles,
+      ));
+    }
+  }
+  variable_del('dennis_client_bundles');
+
+  // Add client fields to taxonomy terms.
   dennis_client_add_fields_to_bundles();
 }
