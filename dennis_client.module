@@ -383,7 +383,7 @@ function dennis_client_views_default_views_alter(&$views) {
  * Implements hook_node_view().
  */
 function dennis_client_node_view($node, $view_mode, $langcode) {
-  if ($view_mode == 'full') {
+  if (node_is_page($node)) {
     // Adding meta tag for googlebot-news.
     if (dennis_client_node_is_sponsored($node)) {
       $element = array(
@@ -395,9 +395,15 @@ function dennis_client_node_view($node, $view_mode, $langcode) {
       );
       drupal_add_html_head($element, 'googlebot-news');
     }
-    // Fire our context plugin when viewing nodes.
-    if ($plugin = context_get_plugin('condition', 'context_condition_content_partnerships')) {
-      $plugin->execute($node);
+    $conditions = array(
+      context_get_plugin('condition', 'context_condition_content_partnerships'),
+      context_get_plugin('condition', 'context_condition_is_sponsored')
+    );
+    foreach ($conditions as $plugin) {
+      // Fire our context plugin when viewing nodes.
+      if ($plugin) {
+        $plugin->execute($node);
+      }
     }
   }
 }
@@ -788,6 +794,14 @@ function dennis_client_context_plugins() {
         'parent' => 'context_condition',
       ),
     ),
+    'context_condition_is_sponsored' => array(
+      'handler' => array(
+        'path' => drupal_get_path('module', 'dennis_client') . '/plugins/context',
+        'file' => 'context_condition_is_sponsored.inc',
+        'class' => 'context_condition_is_sponsored',
+        'parent' => 'context_condition',
+      ),
+    ),
   );
 
   return $plugins;
@@ -802,8 +816,13 @@ function dennis_client_context_registry() {
     'conditions' => array(
       'context_condition_content_partnerships' => array(
         'title' => t('Content partnerships'),
-        'description' => t('Set this context when field Content Partnerships is checked'),
+        'description' => t('Checks if the client branding is included'),
         'plugin' => 'context_condition_content_partnerships',
+      ),
+      'context_condition_is_sponsored' => array(
+        'title' => t('Node is sponsored'),
+        'description' => t('Set this context when node is sponsored'),
+        'plugin' => 'context_condition_is_sponsored',
       ),
     ),
   );

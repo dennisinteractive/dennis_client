@@ -1,0 +1,32 @@
+# OS generated files #
+######################
+.DS_Store*
+ehthumbs.db
+Icon?
+Thumbs.db
+.svn
+._*
+*~
+
+# Ignore IDEs project directories.
+.idea
+.project
+.settings
+*.bbprojectd
+*.sublime-project
+*.sublime-workspace
+*.tmproj
+*.pbxuser
+*.perspective
+*.perspectivev3
+*.mode1v3
+*.mode2v3
+*.swp
+*~.nib
+nbproject
+.komodotools
+.komodoproject
+.buildpath
+
+# Ignore MacFuse hidden files
+.apdisk
