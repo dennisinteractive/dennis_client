@@ -871,6 +871,11 @@ function dennis_client_entity_is_page($entity, $type) {
  *     )
  */
 function dennis_client_menu_get_object() {
+  // Return if the menu item hasn't been determined yet to prevent recursion.
+  if (empty(drupal_static('menu_get_item'))) {
+    return;
+  }
+
   $node = menu_get_object();
   if (!empty($node->nid)) {
     return array(
