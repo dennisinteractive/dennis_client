@@ -468,15 +468,18 @@ function dennis_client_views_query_alter(&$view, &$query) {
 /**
  * Determine whether the node is sponsored or not.
  *
- * @deprecated Use dennis_client_entity_is_sponsored() instead.
- *
  * @param object $node
  *   The node object.
  *
  * @return bool
  */
 function dennis_client_node_is_sponsored($node) {
-  return dennis_client_entity_is_sponsored($node, 'node');
+  $sponsored = dennis_client_entity_is_sponsored($node, 'node');
+
+  // Give site modules a chance to decide if the node is really sponsored.
+  drupal_alter('dennis_client_node_is_sponsored', $sponsored, $node);
+
+  return $sponsored;
 }
 
 /**
@@ -501,7 +504,7 @@ function dennis_client_entity_is_sponsored($entity, $type) {
     }
   }
 
-  // Give site modules a chance to decide if the node is really sponsored.
+  // Give site modules a chance to decide if the entity is really sponsored.
   drupal_alter('dennis_client_entity_is_sponsored', $sponsored, $entity, $type);
 
   return $sponsored;
