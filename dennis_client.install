@@ -93,16 +93,6 @@ function _dennis_client_create_contexts() {
         1 => 1,
       ),
     ),
-    'node' => array(
-      'values' => array(
-        'article' => 'article',
-        'gallery_adv' => 'gallery_adv',
-        'review' => 'review',
-      ),
-      'options' => array(
-        'node_form' => '0',
-      ),
-    ),
   );
   $context->reactions = array(
     'block' => array(
@@ -213,6 +203,9 @@ function dennis_client_update_7103() {
 
   // Add client fields to taxonomy terms.
   dennis_client_add_fields_to_bundles();
+
+  // Re-save contexts.
+  _dennis_client_create_contexts();
 
   // Revert this Feature.
   features_revert(array('dennis_client' => array('field')));
