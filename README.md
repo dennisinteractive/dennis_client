@@ -4,8 +4,9 @@ INTRODUCTION
 Provides the following:
  * DFP targeting for Client terms
  * A Content partnership block that can be attached to articles
- * When the module is installed, some fields will be created on specific content
-   types: Article, Review, Advanced Gallery.
+ * When the module is installed, some fields will be created on specific entities:
+   - Nodes: Article, Review, Advanced Gallery
+   - Taxonomy Terms: Article Type, Tags, Category
 
    If a given content type is not available when the module is installed, the
    fields will be attached to the content type anytime it becomes available.
@@ -19,7 +20,7 @@ Provides the following:
      * Logo
      * Link
      * Strap line
-     * Enable branding on nodes: Global switch to enable the block on all nodes
+     * Enable branding on nodes and terms: Global switch to enable the block on all nodes
        It is possible to turn off the block on node level, see below.
        When a client is selected, the two fields below will become available.
 
@@ -51,18 +52,29 @@ FAQ
 ---
 
 - How to attach Sponsored content fields to existing content types:
-// Set all content types that will have the fields attached.
-variable_set('dennis_client_bundles', ['article', 'review', 'gallery_adv']);
-// Call this function
-dennis_client_add_fields_to_bundles();
+  ```
+  // Set all content types that will have the fields attached.
+  variable_set('dennis_client_entity_type_bundles', [
+    'node' => ['article', 'review', 'gallery_adv'],
+    'taxonomy_term' => ['category', 'tags', 'article_type'],
+  ]);
+
+  // Call this function
+  dennis_client_add_fields_to_bundles();
+  ```
 
 - How to attach fields programmatically to a new content type:
-// Get existing configuration.
-$bundles = variable_get('dennis_client_bundles');
-// Add new content type.
-$bundles[] = 'content_type';
-// Update configuration.
-variable_set('dennis_client_bundles', $bundles);
+  ```
+  // Get existing configuration.
+  $bundles = variable_get('dennis_client_entity_type_bundles');
+
+  // Add new content type.
+  $bundles['node'][] = 'content_type';
+  $bundles['taxonomy_term'][] = 'vocabulary';
+
+  // Update configuration.
+  variable_set('dennis_client_entity_type_bundles', $bundles);
+  ```
 
 When you do this, the hook_node_type_insert() will pick up the configuration and attach the fields automatically.
 
