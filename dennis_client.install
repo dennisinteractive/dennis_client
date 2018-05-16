@@ -204,8 +204,11 @@ function dennis_client_update_7103() {
   // Add client fields to taxonomy terms.
   dennis_client_add_fields_to_bundles();
 
-  // Re-save contexts.
-  _dennis_client_create_contexts();
+  // Remove node context condition.
+  if ($context = context_load('content_partnerships')) {
+    unset($context->conditions['node']);
+    context_save($context);
+  }
 
   // Revert this Feature.
   features_revert(array('dennis_client' => array('field')));
