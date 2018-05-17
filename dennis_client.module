@@ -250,14 +250,21 @@ function dennis_client_add_fields_to_bundles() {
     'taxonomy_term' => array('category', 'tags', 'article_type'),
   ));
 
-  // Add the fields to Article, Reviews, Advanced gallery.
+  // Add the fields to all configured entities.
   $fields = array(
     'field_client',
-    'field_content_partnerships',
-    'field_exclude_client_branding'
+    'field_exclude_client_branding',
   );
   foreach ($fields as $field) {
     dennis_client_ensure_field($field, $entity_type_bundles);
+  }
+
+  // Add node only fields.
+  $node_fields = array(
+    'field_content_partnerships',
+  );
+  foreach ($node_fields as $field) {
+    dennis_client_ensure_field($field, array('node' => $entity_type_bundles['node']));
   }
 }
 
@@ -444,6 +451,7 @@ function dennis_client_views_query_alter(&$view, &$query) {
       $join->left_field = 'nid';
       $join->type = 'LEFT';
       $join->extra_type = 'OR';
+      $join->extra = 'field_data_field_content_partnerships.entity_type = \'node\'';
       $query->table_queue['field_data_field_content_partnerships'] = array(
         'table' => 'field_data_field_content_partnerships',
         'alias' => 'field_data_field_content_partnerships',
