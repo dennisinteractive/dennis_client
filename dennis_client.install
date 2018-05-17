@@ -93,6 +93,11 @@ function _dennis_client_create_contexts() {
         1 => 1,
       ),
     ),
+    'context' => array(
+      'values' => array(
+        '~exhibition_node' => '~exhibition_node',
+      ),
+    ),
   );
   $context->reactions = array(
     'block' => array(
@@ -204,9 +209,13 @@ function dennis_client_update_7103() {
   // Add client fields to taxonomy terms.
   dennis_client_add_fields_to_bundles();
 
-  // Remove node context condition.
   if ($context = context_load('content_partnerships')) {
+    // Remove node context condition.
     unset($context->conditions['node']);
+    // Exclude on exhibition nodes (should be added on display).
+    if (!isset($context->conditions['context']['values']['~exhibition_node'])) {
+      $context->conditions['context']['values']['~exhibition_node'] = '~exhibition_node';
+    }
     context_save($context);
   }
 
