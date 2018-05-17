@@ -18,7 +18,7 @@ class context_condition_content_partnerships extends context_condition {
   function execute($entity, $type) {
     foreach ($this->get_contexts() as $context) {
       if (dennis_client_entity_is_page($entity, $type)) {
-        if (dennis_client_show_content_partnership($entity, $type)) {
+        if (dennis_client_show_content_partnership($entity)) {
           $this->condition_met($context);
         }
       }

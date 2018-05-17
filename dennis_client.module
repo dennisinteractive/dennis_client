@@ -417,7 +417,7 @@ function dennis_client_entity_view($entity, $type, $view_mode, $langcode) {
       }
     }
 
-    if (!dennis_client_show_content_partnership($entity, $type)) {
+    if (!dennis_client_show_content_partnership($entity)) {
       if (isset($entity->content['field_client'])) {
         if ($entity->content['field_client']['#field_type'] == 'taxonomy_term_reference') {
           //@todo check that the view mode = content_partnership, but the information is not available in the array.
@@ -514,10 +514,9 @@ function dennis_client_entity_is_sponsored($entity, $type) {
  * Helper to check whether we should show the content partnership block/rendered entity.
  *
  * @param $entity
- * @param $type
  * @return bool
  */
-function dennis_client_show_content_partnership($entity, $type) {
+function dennis_client_show_content_partnership($entity) {
   $show = TRUE;
   // Check if the enable checkbox has been selected in the client term.
   if (isset($entity->field_client[LANGUAGE_NONE][0]['tid'])) {
@@ -716,9 +715,7 @@ function dennis_client_block_view($delta = '') {
   switch ($delta) {
     case 'content_partnerships':
       if ($menu_entity = dennis_client_menu_get_object()) {
-        $wrapper = entity_metadata_wrapper($menu_entity['type'], $menu_entity['entity']);
-
-        if (!empty($wrapper->field_client) && ($term = $wrapper->field_client->value())) {
+        if (!empty($menu_entity->field_client) && ($term = $menu_entity->field_client->value())) {
           $block = dennis_client_get_content_partnership_block_contents($term);
         }
       }
@@ -835,14 +832,11 @@ function dennis_client_context_registry() {
  */
 function dennis_client_preprocess_html(&$variables) {
   if ($menu_entity = dennis_client_menu_get_object()) {
-    $entity = $menu_entity['entity'];
-    if (dennis_client_show_content_partnership($menu_entity['entity'], $menu_entity['type'])) {
-      if (isset($entity->field_client[LANGUAGE_NONE][0]['tid'])) {
-        if ($term = taxonomy_term_load($entity->field_client[LANGUAGE_NONE][0]['tid'])) {
-          $name = strtolower($term->name);
-          $variables['classes_array'][] = 'page-' . drupal_clean_css_identifier($name);
-          $variables['classes_array'][] = 'tid-' . $term->tid;
-        }
+    if (dennis_client_show_content_partnership($menu_entity->value())) {
+      if (!empty($menu_entity->field_client) && ($term = $menu_entity->field_client->value())) {
+        $name = strtolower($term->name);
+        $variables['classes_array'][] = 'page-' . drupal_clean_css_identifier($name);
+        $variables['classes_array'][] = 'tid-' . $term->tid;
       }
     }
   }
@@ -857,9 +851,8 @@ function dennis_client_preprocess_html(&$variables) {
  */
 function dennis_client_entity_is_page($entity, $type) {
   if ($menu_entity = dennis_client_menu_get_object()) {
-    $menu_entity_wrapper = entity_metadata_wrapper($menu_entity['type'], $menu_entity['entity']);
     $entity_wrapper = entity_metadata_wrapper($type, $entity);
-    return $menu_entity_wrapper->getIdentifier() == $entity_wrapper->getIdentifier();
+    return $menu_entity->getIdentifier() == $entity_wrapper->getIdentifier();
   }
 }
 
@@ -881,17 +874,11 @@ function dennis_client_menu_get_object() {
 
   $node = menu_get_object();
   if (!empty($node->nid)) {
-    return array(
-      'type' => 'node',
-      'entity' => $node,
-    );
+    return entity_metadata_wrapper('node', $node);
   }
   if (arg(0) == 'taxonomy' && arg(1) == 'term' && arg(2)) {
     if ($term = taxonomy_term_load(arg(2))) {
-      return array(
-        'type' => 'taxonomy_term',
-        'entity' => $term,
-      );
+      return entity_metadata_wrapper('taxonomy_term', $term);
     }
   }
 }
