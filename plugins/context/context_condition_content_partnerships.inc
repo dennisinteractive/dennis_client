@@ -16,9 +16,14 @@ class context_condition_content_partnerships extends context_condition {
   }
 
   function execute($entity, $type) {
-    foreach ($this->get_contexts() as $context) {
-      if (dennis_client_entity_is_page($entity, $type)) {
-        if (dennis_client_show_content_partnership($entity)) {
+    // Don't show partnerships on admin paths.
+    if (path_is_admin(current_path())) {
+      return;
+    }
+
+    if (dennis_client_entity_is_page($entity, $type)) {
+      if (dennis_client_show_content_partnership($entity)) {
+        foreach ($this->get_contexts() as $context) {
           $this->condition_met($context);
         }
       }
