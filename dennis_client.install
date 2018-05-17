@@ -78,9 +78,13 @@ function dennis_client_dennis_requirements_alter(&$requirements, $phase, $distro
 }
 
 /**
- * Creates contexts programmatically.
+ * Return array of default contexts provided by this module.
+ *
+ * @return array
  */
-function _dennis_client_create_contexts() {
+function _dennis_client_default_contexts() {
+  $contexts = array();
+
   $context = new stdClass();
   $context->disabled = FALSE; /* Edit this to true to make a default context disabled initially */
   $context->api_version = 3;
@@ -88,14 +92,19 @@ function _dennis_client_create_contexts() {
   $context->description = 'Show the content partnerships block.';
   $context->tag = 'Client';
   $context->conditions = array(
+    'context' => array(
+      'values' => array(
+        '~exhibition_node' => '~exhibition_node',
+      ),
+    ),
     'context_condition_content_partnerships' => array(
       'values' => array(
         1 => 1,
       ),
     ),
-    'context' => array(
+    'path' => array(
       'values' => array(
-        '~exhibition_node' => '~exhibition_node',
+        'node/*' => 'node/*',
       ),
     ),
   );
@@ -110,10 +119,48 @@ function _dennis_client_create_contexts() {
         ),
       ),
     ),
+    'theme_html' => array(
+      'class' => 'content-partnership-active',
+    ),
   );
   $context->condition_mode = 1;
+  $contexts[$context->name] = $context;
 
-  context_save($context);
+  $context = new stdClass();
+  $context->disabled = FALSE; /* Edit this to true to make a default context disabled initially */
+  $context->api_version = 3;
+  $context->name = 'content_partnerships_terms';
+  $context->description = 'Show the content partnerships block on term pages.';
+  $context->tag = 'Client';
+  $context->conditions = array(
+    'context_condition_content_partnerships' => array(
+      'values' => array(
+        1 => 1,
+      ),
+    ),
+    'path' => array(
+      'values' => array(
+        'taxonomy/term/*' => 'taxonomy/term/*',
+      ),
+    ),
+  );
+  $context->reactions = array(
+    'block' => array(
+      'blocks' => array(
+        'dennis_client-content_partnerships' => array(
+          'module' => 'dennis_client',
+          'delta' => 'content_partnerships',
+          'region' => 'preface_top',
+          'weight' => '0',
+        ),
+      ),
+    ),
+    'theme_html' => array(
+      'class' => 'content-partnership-active',
+    ),
+  );
+  $context->condition_mode = 1;
+  $contexts[$context->name] = $context;
 
   $context = new stdClass();
   $context->disabled = FALSE; /* Edit this to true to make a default context disabled initially */
@@ -142,10 +189,23 @@ function _dennis_client_create_contexts() {
         ),
       ),
     ),
+    'theme_html' => array(
+      'class' => 'content-partnership-active',
+    ),
   );
   $context->condition_mode = 1;
+  $contexts[$context->name] = $context;
 
-  context_save($context);
+  return $contexts;
+}
+
+/**
+ * Creates contexts programmatically.
+ */
+function _dennis_client_create_contexts() {
+  foreach (_dennis_client_default_contexts() as $context) {
+    context_save($context);
+  }
 }
 
 /**
@@ -209,15 +269,8 @@ function dennis_client_update_7103() {
   // Add client fields to taxonomy terms.
   dennis_client_add_fields_to_bundles();
 
-  if ($context = context_load('content_partnerships')) {
-    // Remove node context condition.
-    unset($context->conditions['node']);
-    // Exclude on exhibition nodes (should be added on display).
-    if (!isset($context->conditions['context']['values']['~exhibition_node'])) {
-      $context->conditions['context']['values']['~exhibition_node'] = '~exhibition_node';
-    }
-    context_save($context);
-  }
+  // Re-save the contexts
+  _dennis_client_create_contexts();
 
   // Revert this Feature.
   features_revert(array('dennis_client' => array('field')));
