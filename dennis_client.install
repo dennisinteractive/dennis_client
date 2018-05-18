@@ -151,7 +151,7 @@ function _dennis_client_default_contexts() {
           'module' => 'dennis_client',
           'delta' => 'content_partnerships',
           'region' => 'preface_top',
-          'weight' => '0',
+          'weight' => '100',
         ),
       ),
     ),
