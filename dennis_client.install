@@ -261,6 +261,7 @@ function dennis_client_update_7103() {
     if ($node_bundles = variable_get('dennis_client_bundles')) {
       variable_set('dennis_client_entity_type_bundles', array(
         'node' => $node_bundles,
+        'taxonomy_term' => array('category', 'tags', 'article_type'),
       ));
     }
   }
