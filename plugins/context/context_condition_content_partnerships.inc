@@ -15,10 +15,15 @@ class context_condition_content_partnerships extends context_condition {
     return $form;
   }
 
-  function execute($node) {
-    foreach ($this->get_contexts() as $context) {
-      if (current_path() == 'node/' . $node->nid) {
-        if (dennis_client_show_content_partnership($node)) {
+  function execute($entity, $type) {
+    // Don't show partnerships on admin paths.
+    if (path_is_admin(current_path())) {
+      return;
+    }
+
+    if (dennis_client_entity_is_page($entity, $type)) {
+      if (dennis_client_show_content_partnership($entity)) {
+        foreach ($this->get_contexts() as $context) {
           $this->condition_met($context);
         }
       }
