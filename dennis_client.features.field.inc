@@ -363,7 +363,7 @@ function dennis_client_field_default_fields() {
       ),
       'entity_type' => 'taxonomy_term',
       'field_name' => 'field_enable_branding_on_nodes',
-      'label' => 'Enable branding on nodes',
+      'label' => 'Enable branding on nodes and terms',
       'required' => 0,
       'settings' => array(
         'user_register_form' => FALSE,
@@ -637,7 +637,7 @@ function dennis_client_field_default_fields() {
   t('Client link');
   t('Client logo');
   t('Company name');
-  t('Enable branding on nodes');
+  t('Enable branding on nodes and terms');
   t('GA Custom Dimension');
   t('Intro text');
   t('Provides the value to output on Google Analytics Custom Dimensions');
