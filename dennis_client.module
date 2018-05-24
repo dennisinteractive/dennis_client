@@ -858,7 +858,10 @@ function dennis_client_preprocess_html(&$variables) {
  * @return bool
  */
 function dennis_client_entity_is_page($entity, $type) {
-  if (entity_uri($type, $entity) === current_path()) {
+  if (!$uri = entity_uri($type, $entity)) {
+    return FALSE;
+  }
+  if ($uri['path'] === current_path()) {
     return TRUE;
   }
   return FALSE;
