@@ -858,35 +858,34 @@ function dennis_client_preprocess_html(&$variables) {
  * @return bool
  */
 function dennis_client_entity_is_page($entity, $type) {
-  if ($menu_entity = dennis_client_menu_get_object()) {
-    $entity_wrapper = entity_metadata_wrapper($type, $entity);
-    return $menu_entity->getIdentifier() == $entity_wrapper->getIdentifier();
+  if (!$uri = entity_uri($type, $entity)) {
+    return FALSE;
   }
+  if ($uri['path'] === current_path()) {
+    return TRUE;
+  }
+  return FALSE;
 }
 
 /**
  * Get the menu entity object.
  *
- * @return array|null
- *   The entity and it's type, e.g.
- *     array(
- *       'type' => 'node',
- *       'entity' => $node,
- *     )
+ * @return object
+ *   The entity meta wrapper for the current entity.
  */
 function dennis_client_menu_get_object() {
-  // Return if the menu item hasn't been determined yet to prevent recursion.
-  if (empty(drupal_static('menu_get_item'))) {
-    return;
+  $menu_object = &drupal_static(__FUNCTION__);
+  if (!empty($menu_object)) {
+    return $menu_object;
   }
-
   $node = menu_get_object();
   if (!empty($node->nid)) {
-    return entity_metadata_wrapper('node', $node);
+    $menu_object = entity_metadata_wrapper('node', $node);
   }
-  if (arg(0) == 'taxonomy' && arg(1) == 'term' && arg(2)) {
-    if ($term = taxonomy_term_load(arg(2))) {
-      return entity_metadata_wrapper('taxonomy_term', $term);
+  elseif (arg(0) == 'taxonomy' && arg(1) == 'term' && arg(2)) {
+    if ($term = taxonomy_term_load((int) arg(2))) {
+      $menu_object = entity_metadata_wrapper('taxonomy_term', $term);
     }
   }
+  return $menu_object;
 }
