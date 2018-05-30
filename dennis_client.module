@@ -851,6 +851,29 @@ function dennis_client_preprocess_html(&$variables) {
 }
 
 /**
+ * Implements template_preprocess_node().
+ */
+function dennis_client_preprocess_node(&$variables) {
+  if (dennis_client_show_content_partnership($variables['node'])) {
+    // Add client classes if the content partnership can be shown.
+    $node_wrapper = entity_metadata_wrapper('node', $variables['node']);
+    if (!empty($node_wrapper->field_client) && $term = $node_wrapper->field_client->value()) {
+      $name = strtolower($term->name);
+      $variables['classes_array'][] = 'client-' . drupal_clean_css_identifier($name);
+      $variables['classes_array'][] = 'tid-' . $term->tid;
+      $variables['classes_array'][] = 'node-client';
+    }
+    // Add content partnership classes if the node is sponsored.
+    if (dennis_client_node_is_sponsored($variables['node'])) {
+      if ($term = $node_wrapper->field_content_partnerships->value()) {
+        $name = strtolower($term->name);
+        $variables['classes_array'][] = 'node-' . drupal_clean_css_identifier($name);
+      }
+    }
+  }
+}
+
+/**
  * Check if the provided entity is the page object.
  *
  * @param $entity
