@@ -713,6 +713,11 @@ function dennis_client_entity_info_alter(&$entity_info) {
     'label' => t('Content Partnership'),
     'custom settings' => FALSE,
   );
+  // New node view mode
+  $entity_info['node']['view modes']['podcast_teaser'] = array(
+    'label' => t('Podcast Teaser'),
+    'custom settings' => TRUE,
+  );
 }
 
 /**
