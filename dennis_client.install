@@ -275,3 +275,11 @@ function dennis_client_update_7103() {
   // Revert this Feature.
   features_revert(array('dennis_client' => array('field')));
 }
+
+/**
+ * Placing content_partnerships_client_term block in preface_top by default.
+ */
+function dennis_client_update_7104() {
+  // Re-save the contexts
+  _dennis_client_create_contexts();
+}
