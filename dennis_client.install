@@ -184,8 +184,8 @@ function _dennis_client_default_contexts() {
         'dennis_client-content_partnerships_client_term' => array(
           'module' => 'dennis_client',
           'delta' => 'content_partnerships_client_term',
-          'region' => 'content_top',
-          'weight' => '-10',
+          'region' => 'preface_top',
+          'weight' => '100',
         ),
       ),
     ),
