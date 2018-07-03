@@ -184,8 +184,8 @@ function _dennis_client_default_contexts() {
         'dennis_client-content_partnerships_client_term' => array(
           'module' => 'dennis_client',
           'delta' => 'content_partnerships_client_term',
-          'region' => 'content_top',
-          'weight' => '-10',
+          'region' => 'preface_top',
+          'weight' => '100',
         ),
       ),
     ),
@@ -274,4 +274,12 @@ function dennis_client_update_7103() {
 
   // Revert this Feature.
   features_revert(array('dennis_client' => array('field')));
+}
+
+/**
+ * Placing content_partnerships_client_term block in preface_top by default.
+ */
+function dennis_client_update_7104() {
+  // Re-save the contexts
+  _dennis_client_create_contexts();
 }
